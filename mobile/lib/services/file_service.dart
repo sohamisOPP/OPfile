@@ -1,59 +1,142 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/file_item.dart';
 
 class FileService {
-  static Directory? _appDir;
+  static const MethodChannel _channel = MethodChannel('com.opfile/storage_permission');
+  static Directory? _currentDir;
+  static String? _rootStoragePath;
 
-  static Future<Directory> getStorageDirectory() async {
-    if (_appDir != null && _appDir!.existsSync()) {
-      return _appDir!;
+  /// Check whether MANAGE_EXTERNAL_STORAGE permission is granted (Android 11+ / API 30+)
+  static Future<bool> isStoragePermissionGranted() async {
+    try {
+      if (Platform.isAndroid) {
+        final bool? granted = await _channel.invokeMethod<bool>('isStoragePermissionGranted');
+        return granted ?? false;
+      }
+      return true;
+    } catch (_) {
+      return false;
     }
+  }
+
+  /// Request MANAGE_EXTERNAL_STORAGE permission by opening Android Settings
+  static Future<bool> requestStoragePermission() async {
+    try {
+      if (Platform.isAndroid) {
+        final bool? res = await _channel.invokeMethod<bool>('requestStoragePermission');
+        return res ?? false;
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Get the root storage directory (/storage/emulated/0)
+  static Future<String> getRootStoragePath() async {
+    if (_rootStoragePath != null) return _rootStoragePath!;
+    try {
+      if (Platform.isAndroid) {
+        final String? path = await _channel.invokeMethod<String>('getRootStoragePath');
+        if (path != null && Directory(path).existsSync()) {
+          _rootStoragePath = path;
+          return path;
+        }
+      }
+    } catch (_) {}
+    return '/storage/emulated/0';
+  }
+
+  /// Get the active browsing directory
+  static Future<Directory> getCurrentDirectory() async {
+    if (_currentDir != null && _currentDir!.existsSync()) {
+      return _currentDir!;
+    }
+    final hasPermission = await isStoragePermissionGranted();
+    if (hasPermission) {
+      final rootPath = await getRootStoragePath();
+      final rootDir = Directory(rootPath);
+      if (rootDir.existsSync()) {
+        _currentDir = rootDir;
+        return rootDir;
+      }
+    }
+    // Fallback to app documents if permission not granted
     final baseDir = await getApplicationDocumentsDirectory();
     final opDir = Directory(p.join(baseDir.path, 'opfile_files'));
     if (!opDir.existsSync()) {
       opDir.createSync(recursive: true);
     }
-    _appDir = opDir;
+    _currentDir = opDir;
     return opDir;
   }
 
-  /// Lists all files in the OPfile directory.
+  static void setCurrentDirectory(Directory dir) {
+    _currentDir = dir;
+  }
+
+  static Future<Directory> getStorageDirectory() async {
+    return getCurrentDirectory();
+  }
+
+  /// Lists all folders and files in the target or current directory.
   static Future<List<FileItem>> listFiles({
+    Directory? directory,
     FileCategory category = FileCategory.all,
     String searchQuery = '',
   }) async {
-    final dir = await getStorageDirectory();
-    final entities = dir.listSync();
-    final files = <FileItem>[];
+    final dir = directory ?? await getCurrentDirectory();
+    if (!dir.existsSync()) return [];
+
+    final entities = <FileSystemEntity>[];
+    try {
+      entities.addAll(dir.listSync(followLinks: false));
+    } catch (_) {
+      return [];
+    }
+
+    final items = <FileItem>[];
 
     for (final entity in entities) {
-      if (entity is File) {
-        final item = FileItem.fromFile(entity);
+      final name = p.basename(entity.path);
+      // Skip hidden system files (.thumb, .android, etc.) unless searched
+      if (name.startsWith('.') && searchQuery.isEmpty) {
+        continue;
+      }
 
-        // Filter by category
+      final item = FileItem.fromEntity(entity);
+
+      if (!item.isFolder) {
+        // Filter files by category
         if (category != FileCategory.all && item.category != category) {
           continue;
         }
-
-        // Filter by search query
-        if (searchQuery.isNotEmpty &&
-            !item.name.toLowerCase().contains(searchQuery.toLowerCase())) {
-          continue;
-        }
-
-        files.add(item);
       }
+
+      // Filter by search query
+      if (searchQuery.isNotEmpty &&
+          !item.name.toLowerCase().contains(searchQuery.toLowerCase())) {
+        continue;
+      }
+
+      items.add(item);
     }
 
-    // Sort newest first
-    files.sort((a, b) => b.modified.compareTo(a.modified));
-    return files;
+    // Sort: Folders first, then Files
+    items.sort((a, b) {
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+
+    return items;
   }
 
-  /// Opens the native Android file picker to import files from device storage.
+  /// Optional native Android file picker fallback
   static Future<List<FileItem>> importFromDevice() async {
     final result = await FilePicker.pickFiles(
       allowMultiple: true,
@@ -64,7 +147,7 @@ class FileService {
       return [];
     }
 
-    final targetDir = await getStorageDirectory();
+    final targetDir = await getCurrentDirectory();
     final imported = <FileItem>[];
 
     for (final picked in result.files) {
@@ -81,94 +164,67 @@ class FileService {
     return imported;
   }
 
-  /// Renames a file.
+  /// Renames an existing file or directory.
   static Future<FileItem?> renameFile(FileItem item, String newName) async {
-    final file = File(item.path);
-    if (!file.existsSync()) return null;
+    final entity = item.isFolder ? Directory(item.path) : File(item.path);
+    if (!entity.existsSync()) return null;
 
-    final ext = item.extension.isNotEmpty ? '.${item.extension}' : '';
-    final finalName = newName.endsWith(ext) ? newName : '$newName$ext';
-    final newPath = p.join(file.parent.path, finalName);
+    final parent = p.dirname(item.path);
+    final newPath = p.join(parent, newName);
 
-    final renamed = await file.rename(newPath);
-    return FileItem.fromFile(renamed);
-  }
-
-  /// Deletes a file.
-  static Future<bool> deleteFile(FileItem item) async {
-    final file = File(item.path);
-    if (file.existsSync()) {
-      await file.delete();
-      return true;
+    try {
+      final renamed = await entity.rename(newPath);
+      return FileItem.fromEntity(renamed);
+    } catch (_) {
+      return null;
     }
-    return false;
   }
 
-  /// Deletes multiple files.
+  /// Deletes a file or directory.
+  static Future<bool> deleteFile(FileItem item) async {
+    final entity = item.isFolder ? Directory(item.path) : File(item.path);
+    if (!entity.existsSync()) return false;
+
+    try {
+      await entity.delete(recursive: true);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Batch deletes multiple files or folders.
   static Future<int> deleteMultiple(List<FileItem> items) async {
     int deleted = 0;
-    for (final item in items) {
-      final file = File(item.path);
-      if (file.existsSync()) {
-        await file.delete();
+    for (final it in items) {
+      if (await deleteFile(it)) {
         deleted++;
       }
     }
     return deleted;
   }
 
-  /// Copies a file to the device's public Downloads directory.
+  /// Exports a file directly to the system Downloads folder.
   static Future<String?> exportToDownloads(FileItem item) async {
     try {
-      final source = File(item.path);
-      if (!source.existsSync()) return null;
-
-      Directory? downloadDir;
-      if (Platform.isAndroid) {
-        downloadDir = Directory('/storage/emulated/0/Download');
-        if (!downloadDir.existsSync()) {
-          downloadDir = await getExternalStorageDirectory();
-        }
-      } else {
-        downloadDir = await getDownloadsDirectory();
+      final downloadDir = Directory('/storage/emulated/0/Download');
+      if (downloadDir.existsSync()) {
+        final dest = p.join(downloadDir.path, item.name);
+        await File(item.path).copy(dest);
+        return dest;
       }
-
-      if (downloadDir == null || !downloadDir.existsSync()) {
-        downloadDir = await getApplicationDocumentsDirectory();
-      }
-
-      final destPath = p.join(downloadDir.path, item.name);
-      await source.copy(destPath);
-      return destPath;
-    } catch (_) {
-      return null;
-    }
+    } catch (_) {}
+    return null;
   }
 
-  /// Populates initial demo files if directory is empty.
-  static Future<void> ensureInitialSamples() async {
-    final dir = await getStorageDirectory();
-    final existing = dir.listSync();
-    if (existing.isNotEmpty) return;
-
-    // 1. Sample document
-    final docFile = File(p.join(dir.path, 'Welcome_to_OPfile.md'));
-    await docFile.writeAsString('''# Welcome to OPfile 📱
-100% Offline Mobile File Manager & Converter.
-
-## Highlights
-- **Tap this file** to test the Donut radial menu!
-- Tap the **+ Import** button to pick files from your device storage.
-- All conversions are completely offline on your device.
-''');
-
-    // 2. Sample data JSON
-    final jsonFile = File(p.join(dir.path, 'sample_data.json'));
-    await jsonFile.writeAsString('''[
-  {"id": 1, "format": "PNG", "category": "Image", "status": "Ready"},
-  {"id": 2, "format": "JPG", "category": "Image", "status": "Ready"},
-  {"id": 3, "format": "ZIP", "category": "Archive", "status": "Ready"},
-  {"id": 4, "format": "CSV", "category": "Data", "status": "Ready"}
-]''');
+  /// Creates a new subfolder in the current directory.
+  static Future<Directory?> createFolder(String folderName) async {
+    final current = await getCurrentDirectory();
+    final newFld = Directory(p.join(current.path, folderName));
+    if (!newFld.existsSync()) {
+      await newFld.create(recursive: true);
+      return newFld;
+    }
+    return null;
   }
 }

@@ -18,6 +18,7 @@ class FileItem {
   final DateTime modified;
   final String extension;
   final FileCategory category;
+  final bool isFolder;
 
   FileItem({
     required this.path,
@@ -26,25 +27,34 @@ class FileItem {
     required this.modified,
     required this.extension,
     required this.category,
+    this.isFolder = false,
   });
 
-  factory FileItem.fromFile(File file) {
-    final stat = file.statSync();
-    final name = file.uri.pathSegments.isNotEmpty
-        ? file.uri.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => 'file')
+  factory FileItem.fromEntity(FileSystemEntity entity) {
+    FileStat? stat;
+    try {
+      stat = entity.statSync();
+    } catch (_) {}
+
+    final name = entity.uri.pathSegments.isNotEmpty
+        ? entity.uri.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => 'file')
         : 'file';
+    final isDir = entity is Directory;
     final dotIdx = name.lastIndexOf('.');
-    final ext = dotIdx != -1 ? name.substring(dotIdx + 1).toLowerCase() : '';
+    final ext = (!isDir && dotIdx != -1) ? name.substring(dotIdx + 1).toLowerCase() : '';
 
     return FileItem(
-      path: file.path,
+      path: entity.path,
       name: name,
-      size: stat.size,
-      modified: stat.modified,
+      size: isDir ? 0 : (stat?.size ?? 0),
+      modified: stat?.modified ?? DateTime.now(),
       extension: ext,
-      category: categoryFromExtension(ext),
+      category: isDir ? FileCategory.other : categoryFromExtension(ext),
+      isFolder: isDir,
     );
   }
+
+  factory FileItem.fromFile(File file) => FileItem.fromEntity(file);
 
   static FileCategory categoryFromExtension(String ext) {
     switch (ext.toLowerCase()) {
@@ -99,6 +109,7 @@ class FileItem {
   }
 
   String get formattedSize {
+    if (isFolder) return 'Folder';
     if (size < 1024) return '$size B';
     if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
     if (size < 1024 * 1024 * 1024) {

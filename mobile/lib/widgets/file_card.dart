@@ -22,6 +22,9 @@ class FileCard extends StatelessWidget {
   });
 
   Color _getCategoryColor(FileCategory cat) {
+    if (fileItem.isFolder) {
+      return const Color(0xFFF59E0B);
+    }
     switch (cat) {
       case FileCategory.image:
         return const Color(0xFF00E599);
@@ -41,6 +44,9 @@ class FileCard extends StatelessWidget {
   }
 
   IconData _getCategoryIcon(FileCategory cat) {
+    if (fileItem.isFolder) {
+      return Icons.folder_rounded;
+    }
     switch (cat) {
       case FileCategory.image:
         return Icons.image_rounded;
@@ -93,7 +99,11 @@ class FileCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      fileItem.extension.toUpperCase(),
+                      fileItem.isFolder
+                          ? 'DIR'
+                          : (fileItem.extension.isNotEmpty
+                              ? fileItem.extension.toUpperCase()
+                              : 'FILE'),
                       style: TextStyle(
                         color: catColor,
                         fontSize: 10,
@@ -218,7 +228,11 @@ class FileCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          fileItem.extension.toUpperCase(),
+                          fileItem.isFolder
+                              ? 'DIR'
+                              : (fileItem.extension.isNotEmpty
+                                  ? fileItem.extension.toUpperCase()
+                                  : 'FILE'),
                           style: TextStyle(
                             color: catColor,
                             fontSize: 9,
