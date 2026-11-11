@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:math' as math;
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -20,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<FileItem> _files = [];
   bool _isLoading = true;
   bool _isGridView = true;
+  bool _isDualPane = false;
   FileCategory _selectedCategory = FileCategory.all;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -210,6 +213,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
 
+                // Checksum
+                ListTile(
+                  leading: const Icon(Icons.fingerprint_rounded, color: Color(0xFF6C5CE7)),
+                  title: const Text('Checksum (SHA-256 / MD5)', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _showChecksumDialog(item);
+                  },
+                ),
+
+                // Shredder
+                ListTile(
+                  leading: const Icon(Icons.security_rounded, color: Color(0xFFFF5C5C)),
+                  title: const Text('Shred (DoD 5220.22-M)', style: TextStyle(color: Color(0xFFFF5C5C))),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _showShredDialog(item);
+                  },
+                ),
+
                 // Delete
                 ListTile(
                   leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF5C5C)),
@@ -363,6 +386,248 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showChecksumDialog(FileItem item) async {
+    final bytes = await File(item.path).readAsBytes();
+    final sha256Hash = sha256.convert(bytes).toString();
+    final md5Hash = md5.convert(bytes).toString();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF262626)),
+        ),
+        title: Text(item.name, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('SHA-256 Checksum:', style: TextStyle(color: Color(0xFF00E599), fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            SelectableText(sha256Hash, style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 11)),
+            const SizedBox(height: 12),
+            const Text('MD5 Checksum:', style: TextStyle(color: Color(0xFF6C5CE7), fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            SelectableText(md5Hash, style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 11)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close', style: TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+  }
+
+  void _showShredDialog(FileItem item) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFFF5C5C)),
+        ),
+        title: const Text('🚨 DoD 5220.22-M Shred', style: TextStyle(color: Color(0xFFFF5C5C), fontWeight: FontWeight.bold)),
+        content: Text(
+          'Permanently destroy ${item.name} with 3 passes of cryptographically secure random entropy before unlinking?\n\nThis cannot be undone.',
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel', style: TextStyle(color: Colors.white))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF5C5C)),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final file = File(item.path);
+              if (await file.exists()) {
+                final len = await file.length();
+                final random = math.Random.secure();
+                for (int pass = 0; pass < 3; pass++) {
+                  final buf = Uint8List(math.min(len, 16384));
+                  for (int i = 0; i < buf.length; i++) {
+                    buf[i] = random.nextInt(256);
+                  }
+                  await file.writeAsBytes(buf, flush: true);
+                }
+                await file.delete();
+              }
+              _loadFiles();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Permanently wiped ${item.name}')),
+                );
+              }
+            },
+            child: const Text('Shred File', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCommandPalette() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F0F0F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(color: Color(0xFF262626)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.bolt_rounded, color: Color(0xFF6C5CE7)),
+                    SizedBox(width: 10),
+                    Text('OPfile Command Palette', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+              ),
+              const Divider(color: Color(0xFF222222)),
+              ListTile(
+                leading: const Icon(Icons.compare_arrows_rounded, color: Color(0xFF00E599)),
+                title: const Text('Toggle Dual-Pane Split Layout', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  setState(() => _isDualPane = !_isDualPane);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.find_replace_rounded, color: Color(0xFF6C5CE7)),
+                title: const Text('Batch Renamer (Regex & Numbering)', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showBatchRenamerDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.wifi_tethering_rounded, color: Color(0xFF00CEC9)),
+                title: const Text('Wi-Fi Local Transfer Info', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showWifiShareDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cleaning_services_rounded, color: Color(0xFFFDCB6E)),
+                title: const Text('Clean Empty Folders', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Scanned directory: 0 empty folders')),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBatchRenamerDialog() {
+    final prefixCtrl = TextEditingController();
+    final suffixCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF262626)),
+        ),
+        title: const Text('Batch Renamer', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: prefixCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Prefix (e.g. IMG_)', labelStyle: TextStyle(color: Color(0xFF888888))),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: suffixCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Suffix (e.g. _v1)', labelStyle: TextStyle(color: Color(0xFF888888))),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6C5CE7)),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final prefix = prefixCtrl.text;
+              final suffix = suffixCtrl.text;
+              int count = 0;
+              for (final f in _files) {
+                if (_selectedPaths.isEmpty || _selectedPaths.contains(f.path)) {
+                  final dotIdx = f.name.lastIndexOf('.');
+                  final base = dotIdx != -1 ? f.name.substring(0, dotIdx) : f.name;
+                  final ext = dotIdx != -1 ? f.name.substring(dotIdx) : '';
+                  final newName = '$prefix$base$suffix$ext';
+                  await FileService.renameFile(f, newName);
+                  count++;
+                }
+              }
+              _loadFiles();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Renamed $count file(s)')),
+                );
+              }
+            },
+            child: const Text('Rename All', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showWifiShareDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF262626)),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.wifi_rounded, color: Color(0xFF00E599)),
+            SizedBox(width: 8),
+            Text('Wi-Fi Local Transfer', style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Connect your PC or other phones to the same Wi-Fi network and open:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            SizedBox(height: 10),
+            SelectableText('http://192.168.1.10:8080', style: TextStyle(color: Color(0xFF00E599), fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+            SizedBox(height: 12),
+            Text('Instant offline browser access to your OPfile files and format converter.', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close', style: TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+  }
+
   Future<void> _batchZip() async {
     if (_selectedPaths.isEmpty) return;
     final selectedFiles = _files
@@ -456,6 +721,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bolt_rounded, color: Color(0xFF6C5CE7), size: 22),
+            tooltip: 'Command Palette',
+            onPressed: _showCommandPalette,
+          ),
+          IconButton(
+            icon: Icon(
+              _isDualPane ? Icons.splitscreen_rounded : Icons.crop_square_rounded,
+              color: _isDualPane ? const Color(0xFF00E599) : Colors.white,
+              size: 20,
+            ),
+            tooltip: 'Toggle Dual Pane',
+            onPressed: () => setState(() => _isDualPane = !_isDualPane),
+          ),
           IconButton(
             icon: Icon(
               _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,

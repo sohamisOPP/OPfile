@@ -73,6 +73,10 @@ class FileManager {
   }
 
   renderBreadcrumbs() {
+    if (window.coreNav) {
+      window.coreNav.renderBreadcrumbs(this.folderStack);
+      return;
+    }
     if (!this.breadcrumbsContainer) return;
     this.breadcrumbsContainer.innerHTML = '';
 
@@ -187,6 +191,10 @@ class FileManager {
 
       this.container.appendChild(card);
     });
+
+    if (window.viewsPreviews) {
+      window.viewsPreviews.updateStatusBar();
+    }
   }
 
   getItemIcon(item) {

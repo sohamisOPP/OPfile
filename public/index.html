@@ -29,6 +29,9 @@
       <span class="brand-title">OPfile <span class="brand-badge">Offline</span></span>
     </div>
     <div class="header-actions">
+      <button class="icon-btn" onclick="window.coreNav.openCommandPalette()" title="Command Palette (Ctrl+K)">⚡</button>
+      <button class="icon-btn" onclick="window.viewsPreviews.toggleTerminal()" title="Terminal">💻</button>
+      <button class="icon-btn" onclick="window.coreNav.setPaneMode(window.coreNav.paneMode === 'single' ? 'dual' : (window.coreNav.paneMode === 'dual' ? 'quad' : 'single'))" title="Cycle Panes (Single/Dual/Quad)">◫</button>
       <button class="icon-btn" id="btn-toggle-view" title="Toggle Grid/List View" aria-label="Toggle View">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7"></rect>
@@ -75,7 +78,39 @@
 
     <!-- View 1: File Manager -->
     <section class="app-view active" id="view-files">
-      <div id="file-grid-container" class="file-container grid-view"></div>
+      <!-- Feature 182: Drag-to-Convert Docked Drop Zones -->
+      <div class="drop-zones-bar">
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">⚡ DROP TO:</span>
+        <div class="convert-drop-target" data-format="webp">🖼️ WebP</div>
+        <div class="convert-drop-target" data-format="jpg">📸 JPG</div>
+        <div class="convert-drop-target" data-format="pdf">📄 PDF</div>
+        <div class="convert-drop-target" data-format="zip">📦 ZIP</div>
+        <div class="convert-drop-target" data-format="wav">🎵 WAV</div>
+        <div class="convert-drop-target" data-format="csv">📊 CSV</div>
+      </div>
+
+      <!-- Features 1 & 2: Panes Wrapper -->
+      <div id="panes-wrapper" class="panes-wrapper layout-single">
+        <div class="file-pane active-pane" id="pane-0">
+          <div class="pane-tabs-bar" id="pane-tabs-0"></div>
+          <div id="file-grid-container" class="file-container grid-view"></div>
+        </div>
+        <div class="file-pane" id="pane-1" style="display: none;">
+          <div class="pane-tabs-bar" id="pane-tabs-1"></div>
+          <div id="file-grid-container-1" class="file-container grid-view"></div>
+        </div>
+        <div class="file-pane" id="pane-2" style="display: none;">
+          <div class="pane-tabs-bar" id="pane-tabs-2"></div>
+          <div id="file-grid-container-2" class="file-container grid-view"></div>
+        </div>
+        <div class="file-pane" id="pane-3" style="display: none;">
+          <div class="pane-tabs-bar" id="pane-tabs-3"></div>
+          <div id="file-grid-container-3" class="file-container grid-view"></div>
+        </div>
+      </div>
+
+      <!-- Feature 35: Status Bar Telemetry -->
+      <div class="status-bar-telemetry" id="status-bar-telemetry"></div>
     </section>
 
     <!-- View 2: Quick Convert -->
@@ -296,13 +331,146 @@
   <!-- Hidden File Input for Device Imports -->
   <input type="file" id="hidden-file-input" multiple style="display: none;">
 
+  <!-- ==================== FEATURES 1-200 MODALS ==================== -->
+
+  <!-- Feature 19: Command Palette Modal -->
+  <div id="modal-command-palette">
+    <div class="command-palette-card">
+      <input type="text" id="command-palette-input" class="command-palette-input" placeholder="Type a command or search actions... (ESC to close)" oninput="window.coreNav.filterCommandPalette(this.value)" onkeydown="if(event.key==='Escape') document.getElementById('modal-command-palette').style.display='none'">
+      <div id="command-palette-list" class="command-palette-list"></div>
+    </div>
+  </div>
+
+  <!-- Feature 24: Spacebar Quick Look Modal -->
+  <div id="modal-quick-look">
+    <div class="quick-look-card">
+      <div class="quick-look-header">
+        <div>
+          <h3 id="quick-look-title">Preview</h3>
+          <p id="quick-look-meta" style="font-size: 0.75rem; color: var(--text-muted);"></p>
+        </div>
+        <button class="icon-btn" onclick="document.getElementById('modal-quick-look').style.display='none'">✕</button>
+      </div>
+      <div id="quick-look-preview-body" class="quick-look-body"></div>
+    </div>
+  </div>
+
+  <!-- Feature 25: Embedded Terminal Panel -->
+  <div id="embedded-terminal-panel" class="embedded-terminal-panel">
+    <div class="term-header">
+      <span>💻 OPfile Shell v1.0 (Embedded)</span>
+      <button class="icon-btn" onclick="window.viewsPreviews.toggleTerminal()" style="padding: 2px 6px; font-size: 0.7rem;">✕</button>
+    </div>
+    <div id="term-output-stream" class="term-output-stream">
+      <div class="term-line">Welcome to OPfile embedded shell. Type 'help' for commands.</div>
+    </div>
+    <div class="term-input-box">
+      <span style="color: #00ffaa; margin-right: 6px;">$</span>
+      <input type="text" id="term-cmd-input" placeholder="ls, cd, cat, mkdir, rm, help..." onkeydown="if(event.key==='Enter') window.viewsPreviews.runTerminalCommand(this.value)" />
+    </div>
+  </div>
+
+  <!-- Feature 10: Multi-Pattern Batch Renamer Modal -->
+  <div class="modal-overlay" id="modal-batch-renamer" style="display: none;">
+    <div class="donut-modal-card" style="max-width: 600px;">
+      <div class="donut-header">
+        <h3>⚡ Multi-Pattern Batch Renamer</h3>
+        <button class="icon-btn" onclick="document.getElementById('modal-batch-renamer').style.display='none'">✕</button>
+      </div>
+      <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="rename-find-pattern" class="search-input" placeholder="Find text..." oninput="window.coreNav.updateRenamerPreview()">
+          <input type="text" id="rename-replace-pattern" class="search-input" placeholder="Replace with ({n} for counter)..." oninput="window.coreNav.updateRenamerPreview()">
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="rename-prefix" class="search-input" placeholder="Prefix..." oninput="window.coreNav.updateRenamerPreview()">
+          <input type="text" id="rename-suffix" class="search-input" placeholder="Suffix..." oninput="window.coreNav.updateRenamerPreview()">
+          <input type="number" id="rename-start-num" class="search-input" value="1" style="width: 80px;" oninput="window.coreNav.updateRenamerPreview()">
+        </div>
+        <label style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+          <input type="checkbox" id="rename-use-regex" onchange="window.coreNav.updateRenamerPreview()"> Use Regular Expressions (Regex)
+        </label>
+        <div style="background: #000; padding: 0.8rem; border-radius: 8px; max-height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;" id="renamer-preview-list"></div>
+        <button class="btn btn-primary" onclick="window.coreNav.executeBatchRename()">Apply Batch Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature 61: Cushion Treemap Disk Usage Analyzer Modal -->
+  <div class="modal-overlay" id="modal-treemap-analyzer" style="display: none;">
+    <div class="donut-modal-card" style="max-width: 700px;">
+      <div class="donut-header">
+        <h3>📊 Visual Cushion Treemap Disk Usage</h3>
+        <button class="icon-btn" onclick="document.getElementById('modal-treemap-analyzer').style.display='none'">✕</button>
+      </div>
+      <div style="padding: 1rem;">
+        <canvas id="treemap-canvas" style="width: 100%; border-radius: 8px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature 67: Checksum Generator & Verifier Modal -->
+  <div class="modal-overlay" id="modal-checksum" style="display: none;">
+    <div class="donut-modal-card" style="max-width: 550px;">
+      <div class="donut-header">
+        <h3>🔒 Checksum Generator</h3>
+        <button class="icon-btn" onclick="document.getElementById('modal-checksum').style.display='none'">✕</button>
+      </div>
+      <div style="padding: 1rem; font-family: monospace; font-size: 0.85rem; line-height: 1.8;">
+        <div>File: <b id="checksum-filename" style="color: #fff;"></b></div>
+        <div style="margin-top: 0.5rem; word-break: break-all;">SHA-256:<br><span id="checksum-sha256" style="color: var(--accent);"></span></div>
+        <div style="margin-top: 0.5rem; word-break: break-all;">SHA-512:<br><span id="checksum-sha512" style="color: #00cec9;"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature 70: DoD 5220.22-M File Shredder Modal -->
+  <div class="modal-overlay" id="modal-file-shredder" style="display: none;">
+    <div class="donut-modal-card" style="max-width: 500px; border-color: var(--danger);">
+      <div class="donut-header">
+        <h3 style="color: var(--danger);">🚨 DoD 5220.22-M File Shredder</h3>
+        <button class="icon-btn" onclick="document.getElementById('modal-file-shredder').style.display='none'">✕</button>
+      </div>
+      <div style="padding: 1.2rem;">
+        <p style="font-size: 0.85rem; color: #ddd; margin-bottom: 0.8rem;">
+          Permanently destroy <b id="shred-target-name"></b> using cryptographic multi-pass random data overwrite? This action cannot be undone.
+        </p>
+        <p id="shred-progress-text" style="font-size: 0.8rem; color: var(--accent); margin-bottom: 1rem;"></p>
+        <button class="btn btn-primary" style="background: var(--danger); width: 100%;" onclick="window.storageDisk.executeShred(3)">
+          Permanently Shred File
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature 86: Local Wi-Fi HTTP Share with QR Modal -->
+  <div class="modal-overlay" id="modal-wifi-share" style="display: none;">
+    <div class="donut-modal-card" style="max-width: 480px; text-align: center;">
+      <div class="donut-header">
+        <h3>📲 Wi-Fi Local File Drop</h3>
+        <button class="icon-btn" onclick="document.getElementById('modal-wifi-share').style.display='none'">✕</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div id="wifi-qr-code-box" style="margin-bottom: 1rem;"></div>
+        <div style="background: #000; padding: 0.6rem; border-radius: 6px; font-family: monospace; font-size: 0.9rem; color: var(--accent);" id="wifi-share-url"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Global App Toast Notification -->
   <div class="toast" id="app-toast"></div>
 
-  <!-- App Core Scripts -->
+  <!-- App Core Scripts (All 200 Features Included) -->
   <script src="/js/db.js"></script>
   <script src="/js/converters.js"></script>
+  <script src="/js/converters-extended.js"></script>
   <script src="/js/donut.js"></script>
+  <script src="/js/core-nav.js"></script>
+  <script src="/js/views-previews.js"></script>
+  <script src="/js/search-metadata.js"></script>
+  <script src="/js/storage-disk.js"></script>
+  <script src="/js/network-security.js"></script>
+  <script src="/js/automation.js"></script>
   <script src="/js/filemanager.js"></script>
   <script src="/js/app.js"></script>
 </body>

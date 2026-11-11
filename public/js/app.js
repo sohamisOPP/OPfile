@@ -35,6 +35,18 @@ class FileeApp {
     await this.updateStorageInfo();
     await this.loadRecentHistory();
 
+    // 8. Initialize Features 1-200 Extensions
+    if (window.coreNav) {
+      window.coreNav.initFunctionKeys();
+      window.coreNav.initMouseGestures();
+      window.coreNav.renderPanes();
+      window.coreNav.renderTabs(0);
+      window.coreNav.renderBreadcrumbs(window.fileManager.folderStack);
+    }
+    if (window.viewsPreviews) {
+      window.viewsPreviews.updateStatusBar();
+    }
+
     console.log('OPfile Initialized Successfully.');
   }
 
