@@ -4,18 +4,18 @@
    ========================================================================== */
 
 :root {
-  --bg-main: #0d1117;
-  --bg-surface: #161b22;
-  --bg-surface-elevated: #21262d;
-  --border-color: #30363d;
-  --border-light: rgba(255, 255, 255, 0.1);
-  --text-primary: #f0f6fc;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
-  --accent: #00d2b4;
-  --accent-hover: #00f5d4;
-  --accent-glow: rgba(0, 210, 180, 0.25);
-  --danger: #f85149;
+  --bg-main: #000000;
+  --bg-surface: #111111;
+  --bg-surface-elevated: #161616;
+  --border-color: #242424;
+  --border-light: #2e2e2e;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #707070;
+  --accent: #00e599;
+  --accent-hover: #00ffaa;
+  --accent-glow: rgba(0, 229, 153, 0.25);
+  --danger: #ff5c5c;
   --safe-bottom: env(safe-area-inset-bottom, 16px);
   --radius-lg: 16px;
   --radius-md: 12px;
@@ -44,8 +44,8 @@ body {
 /* App Header */
 .app-header {
   background: rgba(22, 27, 34, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  
+  -webkit-
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 1rem;
   display: flex;
@@ -438,8 +438,8 @@ body {
   left: 0;
   right: 0;
   background: rgba(22, 27, 34, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  
+  -webkit-
   border-top: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -539,8 +539,8 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  
+  -webkit-
   display: none;
   align-items: center;
   justify-content: center;
@@ -961,7 +961,7 @@ body {
   left: 50%;
   transform: translateX(-50%) translateY(100px);
   background: rgba(22, 27, 34, 0.95);
-  backdrop-filter: blur(12px);
+  
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 0.6rem 1.2rem;

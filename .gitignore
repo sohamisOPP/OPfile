@@ -2,3 +2,9 @@ node_modules/
 .DS_Store
 *.log
 .temp/
+mobile/.dart_tool/
+mobile/build/
+mobile/.gradle/
+mobile/android/.gradle/
+mobile/android/local.properties
+
