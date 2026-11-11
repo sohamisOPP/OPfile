@@ -23,23 +23,23 @@ class FileCard extends StatelessWidget {
 
   Color _getCategoryColor(FileCategory cat) {
     if (fileItem.isFolder) {
-      return const Color(0xFFF59E0B);
+      return const Color(0xFFF59E0B); // Amber folder color
     }
     switch (cat) {
       case FileCategory.image:
-        return const Color(0xFF00E599);
+        return const Color(0xFF10B981); // Emerald
       case FileCategory.document:
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6); // Blue
       case FileCategory.audio:
-        return const Color(0xFFA855F7);
+        return const Color(0xFF8B5CF6); // Purple
       case FileCategory.video:
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFEC4899); // Pink / Red
       case FileCategory.archive:
-        return const Color(0xFFF43F5E);
+        return const Color(0xFFF97316); // Orange
       case FileCategory.data:
-        return const Color(0xFF06B6D4);
+        return const Color(0xFF06B6D4); // Cyan
       default:
-        return const Color(0xFF888888);
+        return const Color(0xFF9CA3AF); // Muted grey
     }
   }
 
@@ -51,11 +51,11 @@ class FileCard extends StatelessWidget {
       case FileCategory.image:
         return Icons.image_rounded;
       case FileCategory.document:
-        return Icons.description_rounded;
+        return Icons.article_rounded;
       case FileCategory.audio:
-        return Icons.music_note_rounded;
+        return Icons.audiotrack_rounded;
       case FileCategory.video:
-        return Icons.videocam_rounded;
+        return Icons.movie_rounded;
       case FileCategory.archive:
         return Icons.folder_zip_rounded;
       case FileCategory.data:
@@ -74,80 +74,47 @@ class FileCard extends StatelessWidget {
       return InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1E2A24) : const Color(0xFF121212),
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? const Color(0xFF1E2822) : const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? const Color(0xFF00E599) : const Color(0xFF222222),
               width: isSelected ? 1.5 : 1.0,
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Top row: Extension pill + selection/more
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Stack(
+                alignment: Alignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
-                      color: catColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
+                      color: catColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Text(
-                      fileItem.isFolder
-                          ? 'DIR'
-                          : (fileItem.extension.isNotEmpty
-                              ? fileItem.extension.toUpperCase()
-                              : 'FILE'),
-                      style: TextStyle(
-                        color: catColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                    child: Icon(catIcon, color: catColor, size: 28),
                   ),
                   if (isBatchMode)
-                    Icon(
-                      isSelected
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                      color: isSelected ? const Color(0xFF00E599) : const Color(0xFF555555),
-                      size: 20,
-                    )
-                  else
-                    InkWell(
-                      onTap: onMoreOptions,
-                      borderRadius: BorderRadius.circular(12),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Icon(Icons.more_vert_rounded, color: Color(0xFF666666), size: 16),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Icon(
+                        isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: isSelected ? const Color(0xFF00E599) : const Color(0xFF666666),
+                        size: 20,
                       ),
                     ),
                 ],
               ),
-              const Spacer(),
-
-              // Icon in center
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF282828)),
-                  ),
-                  child: Icon(catIcon, color: catColor, size: 22),
-                ),
-              ),
-              const Spacer(),
-
-              // Name
+              const SizedBox(height: 10),
               Text(
                 fileItem.name,
                 style: const TextStyle(
@@ -157,10 +124,9 @@ class FileCard extends StatelessWidget {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 2),
-
-              // Size
+              const SizedBox(height: 3),
               Text(
                 fileItem.formattedSize,
                 style: const TextStyle(
@@ -175,35 +141,33 @@ class FileCard extends StatelessWidget {
       );
     }
 
-    // List View Mode
+    // Classic List View
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(14),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1E2A24) : const Color(0xFF121212),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF00E599) : const Color(0xFF222222),
-            width: isSelected ? 1.5 : 1.0,
+          color: isSelected ? const Color(0xFF1A2620) : Colors.transparent,
+          border: const Border(
+            bottom: BorderSide(color: Color(0xFF161616), width: 1),
           ),
         ),
         child: Row(
           children: [
+            // Icon
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
+                color: catColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF282828)),
               ),
-              child: Icon(catIcon, color: catColor, size: 20),
+              child: Icon(catIcon, color: catColor, size: 22),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
+
+            // Name & Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,37 +176,31 @@ class FileCard extends StatelessWidget {
                     fileItem.name,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 13,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: catColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          fileItem.isFolder
-                              ? 'DIR'
-                              : (fileItem.extension.isNotEmpty
-                                  ? fileItem.extension.toUpperCase()
-                                  : 'FILE'),
-                          style: TextStyle(
-                            color: catColor,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      Text(
+                        fileItem.isFolder ? 'Folder' : fileItem.formattedSize,
+                        style: const TextStyle(
+                          color: Color(0xFF888888),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
+                      const Text(
+                        '•',
+                        style: TextStyle(color: Color(0xFF555555), fontSize: 11),
+                      ),
+                      const SizedBox(width: 6),
                       Text(
-                        fileItem.formattedSize,
+                        fileItem.formattedDate,
                         style: const TextStyle(
                           color: Color(0xFF777777),
                           fontSize: 11,
@@ -253,17 +211,22 @@ class FileCard extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Selection Checkbox or 3-dots Menu
             if (isBatchMode)
               Icon(
                 isSelected
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
                 color: isSelected ? const Color(0xFF00E599) : const Color(0xFF555555),
-                size: 20,
+                size: 22,
               )
             else
               IconButton(
-                icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF666666), size: 18),
+                icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF777777), size: 20),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: onMoreOptions,
               ),
           ],

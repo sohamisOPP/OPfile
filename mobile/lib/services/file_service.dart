@@ -10,7 +10,7 @@ class FileService {
   static Directory? _currentDir;
   static String? _rootStoragePath;
 
-  /// Check whether MANAGE_EXTERNAL_STORAGE permission is granted (Android 11+ / API 30+)
+  /// Check whether storage permission is granted
   static Future<bool> isStoragePermissionGranted() async {
     try {
       if (Platform.isAndroid) {
@@ -23,7 +23,7 @@ class FileService {
     }
   }
 
-  /// Request MANAGE_EXTERNAL_STORAGE permission by opening Android Settings
+  /// Request storage permission (opens Android Settings on Android 11+ or prompts on <=10)
   static Future<bool> requestStoragePermission() async {
     try {
       if (Platform.isAndroid) {
@@ -38,7 +38,9 @@ class FileService {
 
   /// Get the root storage directory (/storage/emulated/0)
   static Future<String> getRootStoragePath() async {
-    if (_rootStoragePath != null) return _rootStoragePath!;
+    if (_rootStoragePath != null && Directory(_rootStoragePath!).existsSync()) {
+      return _rootStoragePath!;
+    }
     try {
       if (Platform.isAndroid) {
         final String? path = await _channel.invokeMethod<String>('getRootStoragePath');
@@ -48,24 +50,39 @@ class FileService {
         }
       }
     } catch (_) {}
-    return '/storage/emulated/0';
+
+    // Fallbacks
+    const commonPath = '/storage/emulated/0';
+    if (Directory(commonPath).existsSync()) {
+      _rootStoragePath = commonPath;
+      return commonPath;
+    }
+
+    return '/sdcard';
   }
 
-  /// Get the active browsing directory
+  /// Get the active browsing directory.
+  /// When storage permission is granted, this is GUARANTEED to point to device storage (/storage/emulated/0),
+  /// never the sandboxed application directory.
   static Future<Directory> getCurrentDirectory() async {
+    final hasPermission = await isStoragePermissionGranted();
+    final rootPath = await getRootStoragePath();
+    final rootDir = Directory(rootPath);
+
+    if (hasPermission) {
+      if (_currentDir == null ||
+          !_currentDir!.existsSync() ||
+          !_currentDir!.path.startsWith(rootPath)) {
+        _currentDir = rootDir;
+      }
+      return _currentDir!;
+    }
+
+    // Only if permission is not granted, fallback to sandbox
     if (_currentDir != null && _currentDir!.existsSync()) {
       return _currentDir!;
     }
-    final hasPermission = await isStoragePermissionGranted();
-    if (hasPermission) {
-      final rootPath = await getRootStoragePath();
-      final rootDir = Directory(rootPath);
-      if (rootDir.existsSync()) {
-        _currentDir = rootDir;
-        return rootDir;
-      }
-    }
-    // Fallback to app documents if permission not granted
+
     final baseDir = await getApplicationDocumentsDirectory();
     final opDir = Directory(p.join(baseDir.path, 'opfile_files'));
     if (!opDir.existsSync()) {
@@ -73,6 +90,10 @@ class FileService {
     }
     _currentDir = opDir;
     return opDir;
+  }
+
+  static Directory? getCurrentDirectorySync() {
+    return _currentDir;
   }
 
   static void setCurrentDirectory(Directory dir) {
@@ -84,49 +105,57 @@ class FileService {
   }
 
   /// Lists all folders and files in the target or current directory.
+  /// Handles streams gracefully with error catching so no system subdirs break the listing.
   static Future<List<FileItem>> listFiles({
     Directory? directory,
     FileCategory category = FileCategory.all,
     String searchQuery = '',
+    bool showHidden = false,
   }) async {
     final dir = directory ?? await getCurrentDirectory();
-    if (!dir.existsSync()) return [];
-
-    final entities = <FileSystemEntity>[];
-    try {
-      entities.addAll(dir.listSync(followLinks: false));
-    } catch (_) {
+    if (!dir.existsSync()) {
       return [];
     }
 
     final items = <FileItem>[];
 
-    for (final entity in entities) {
-      final name = p.basename(entity.path);
-      // Skip hidden system files (.thumb, .android, etc.) unless searched
-      if (name.startsWith('.') && searchQuery.isEmpty) {
-        continue;
-      }
+    try {
+      final stream = dir.list(followLinks: false);
+      await for (final entity in stream.handleError((e) {
+        // Silently skip unreadable system directories (e.g. Android/data on API 30+)
+      })) {
+        final name = p.basename(entity.path);
 
-      final item = FileItem.fromEntity(entity);
-
-      if (!item.isFolder) {
-        // Filter files by category
-        if (category != FileCategory.all && item.category != category) {
+        // Filter hidden files (.dotfiles) unless showHidden is true or searching
+        if (!showHidden && name.startsWith('.') && searchQuery.isEmpty) {
           continue;
         }
+
+        FileItem? item;
+        try {
+          item = FileItem.fromEntity(entity);
+        } catch (_) {
+          continue;
+        }
+
+        // Category filter: applies to files only, so directories remain navigable
+        if (category != FileCategory.all) {
+          if (!item.isFolder && item.category != category) {
+            continue;
+          }
+        }
+
+        // Search query filter
+        if (searchQuery.isNotEmpty &&
+            !item.name.toLowerCase().contains(searchQuery.toLowerCase())) {
+          continue;
+        }
+
+        items.add(item);
       }
+    } catch (_) {}
 
-      // Filter by search query
-      if (searchQuery.isNotEmpty &&
-          !item.name.toLowerCase().contains(searchQuery.toLowerCase())) {
-        continue;
-      }
-
-      items.add(item);
-    }
-
-    // Sort: Folders first, then Files
+    // Sort: Folders first, then files alphabetically
     items.sort((a, b) {
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
@@ -136,7 +165,7 @@ class FileService {
     return items;
   }
 
-  /// Optional native Android file picker fallback
+  /// Optional file picker fallback
   static Future<List<FileItem>> importFromDevice() async {
     final result = await FilePicker.pickFiles(
       allowMultiple: true,
@@ -164,7 +193,7 @@ class FileService {
     return imported;
   }
 
-  /// Renames an existing file or directory.
+  /// Renames an existing file or directory
   static Future<FileItem?> renameFile(FileItem item, String newName) async {
     final entity = item.isFolder ? Directory(item.path) : File(item.path);
     if (!entity.existsSync()) return null;
@@ -180,7 +209,7 @@ class FileService {
     }
   }
 
-  /// Deletes a file or directory.
+  /// Deletes a file or directory recursively
   static Future<bool> deleteFile(FileItem item) async {
     final entity = item.isFolder ? Directory(item.path) : File(item.path);
     if (!entity.existsSync()) return false;
@@ -193,7 +222,7 @@ class FileService {
     }
   }
 
-  /// Batch deletes multiple files or folders.
+  /// Batch deletes multiple files or folders
   static Future<int> deleteMultiple(List<FileItem> items) async {
     int deleted = 0;
     for (final it in items) {
@@ -204,7 +233,7 @@ class FileService {
     return deleted;
   }
 
-  /// Exports a file directly to the system Downloads folder.
+  /// Exports a file to Downloads
   static Future<String?> exportToDownloads(FileItem item) async {
     try {
       final downloadDir = Directory('/storage/emulated/0/Download');
@@ -217,7 +246,7 @@ class FileService {
     return null;
   }
 
-  /// Creates a new subfolder in the current directory.
+  /// Creates a new subfolder in the current directory
   static Future<Directory?> createFolder(String folderName) async {
     final current = await getCurrentDirectory();
     final newFld = Directory(p.join(current.path, folderName));

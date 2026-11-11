@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 enum FileCategory {
   all,
@@ -36,16 +37,14 @@ class FileItem {
       stat = entity.statSync();
     } catch (_) {}
 
-    final name = entity.uri.pathSegments.isNotEmpty
-        ? entity.uri.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => 'file')
-        : 'file';
-    final isDir = entity is Directory;
-    final dotIdx = name.lastIndexOf('.');
-    final ext = (!isDir && dotIdx != -1) ? name.substring(dotIdx + 1).toLowerCase() : '';
+    final rawName = p.basename(entity.path);
+    final isDir = (entity is Directory) || (stat?.type == FileSystemEntityType.directory);
+    final dotIdx = rawName.lastIndexOf('.');
+    final ext = (!isDir && dotIdx != -1) ? rawName.substring(dotIdx + 1).toLowerCase() : '';
 
     return FileItem(
       path: entity.path,
-      name: name,
+      name: rawName.isEmpty ? 'Item' : rawName,
       size: isDir ? 0 : (stat?.size ?? 0),
       modified: stat?.modified ?? DateTime.now(),
       extension: ext,
@@ -68,6 +67,11 @@ class FileItem {
       case 'tiff':
       case 'tga':
       case 'svg':
+      case 'heic':
+      case 'heif':
+      case 'raw':
+      case 'cr2':
+      case 'nef':
         return FileCategory.image;
       case 'pdf':
       case 'doc':
@@ -75,6 +79,8 @@ class FileItem {
       case 'txt':
       case 'rtf':
       case 'epub':
+      case 'odt':
+      case 'pages':
         return FileCategory.document;
       case 'mp3':
       case 'wav':
@@ -82,18 +88,29 @@ class FileItem {
       case 'm4a':
       case 'flac':
       case 'aac':
+      case 'wma':
+      case 'opus':
+      case 'mid':
+      case 'midi':
         return FileCategory.audio;
       case 'mp4':
       case 'mkv':
       case 'webm':
       case 'avi':
       case 'mov':
+      case 'wmv':
+      case 'flv':
+      case '3gp':
+      case 'm4v':
         return FileCategory.video;
       case 'zip':
       case 'tar':
       case 'gz':
       case 'rar':
       case '7z':
+      case 'bz2':
+      case 'xz':
+      case 'zst':
         return FileCategory.archive;
       case 'json':
       case 'csv':
@@ -102,6 +119,10 @@ class FileItem {
       case 'html':
       case 'yaml':
       case 'yml':
+      case 'sql':
+      case 'log':
+      case 'ini':
+      case 'conf':
         return FileCategory.data;
       default:
         return FileCategory.other;
@@ -116,5 +137,9 @@ class FileItem {
       return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
     }
     return '${(size / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
+  String get formattedDate {
+    return '${modified.year}-${modified.month.toString().padLeft(2, '0')}-${modified.day.toString().padLeft(2, '0')} ${modified.hour.toString().padLeft(2, '0')}:${modified.minute.toString().padLeft(2, '0')}';
   }
 }
