@@ -4,6 +4,14 @@
 
 ---
 
+## 📲 Download Android APK
+
+You can install OPfile directly on any Android device:
+- **Direct Repository Download:** [OPfile.apk](OPfile.apk) or [release/OPfile.apk](release/OPfile.apk)
+- **GitHub Releases:** [Download latest OPfile APK from Releases](https://github.com/sohamboyYT/opfile/releases)
+
+---
+
 ## 🌟 Key Features
 
 ### 🍩 The Donut Converter
