@@ -168,7 +168,7 @@
                 android:id="@+id/selection_action_bar"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:background="#1E1638"
+                android:background="#1A1A1A"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="12dp"

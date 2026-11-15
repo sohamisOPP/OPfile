@@ -10,14 +10,32 @@
         <item name="android:statusBarColor">@color/toolbar_surface</item>
         <item name="android:navigationBarColor">@color/amoled_black</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowAnimationStyle">@style/Animation.OPfile.Window</item>
         <item name="bottomSheetDialogTheme">@style/Theme.OPfile.BottomSheet</item>
         <item name="alertDialogTheme">@style/Theme.OPfile.Dialog</item>
+    </style>
+
+    <style name="Animation.OPfile.Window" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/activity_slide_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/activity_slide_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/activity_back_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/activity_back_exit</item>
+    </style>
+
+    <style name="Animation.OPfile.Dialog" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_pop_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_pop_exit</item>
+    </style>
+
+    <style name="Animation.OPfile.BottomSheet" parent="">
+        <item name="android:windowEnterAnimation">@anim/bottom_sheet_enter</item>
+        <item name="android:windowExitAnimation">@anim/bottom_sheet_exit</item>
     </style>
 
     <style name="Theme.OPfile.BottomSheet" parent="Theme.Material3.Dark.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.OPfile.BottomSheet</item>
         <item name="android:backgroundDimAmount">0.55</item>
+        <item name="android:windowAnimationStyle">@style/Animation.OPfile.BottomSheet</item>
     </style>
 
     <style name="Widget.OPfile.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
@@ -40,5 +58,6 @@
         <item name="colorOnPrimary">@color/amoled_black</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:windowAnimationStyle">@style/Animation.OPfile.Dialog</item>
     </style>
 </resources>

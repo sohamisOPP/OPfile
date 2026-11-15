@@ -12,6 +12,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -61,6 +63,11 @@ class MainActivity : AppCompatActivity() {
     // Multi-select state
     private var isSelectionMode: Boolean = false
     private val selectedItems = mutableSetOf<String>()
+
+    // Navigation and animation state
+    enum class NavDirection { FORWARD, BACKWARD, REFRESH }
+    private var navDirection = NavDirection.REFRESH
+    private var wasClipboardActive: Boolean = false
 
     // Clipboard state (for morphing FAB)
     private var clipboardCutMode: Boolean = false
@@ -187,10 +194,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.btn_search_close).setOnClickListener {
-            searchBarContainer.visibility = View.GONE
-            searchQuery = ""
-            etSearchQuery.setText("")
-            refreshDirectory()
+            toggleSearchBar()
         }
 
         etSearchQuery.setOnEditorActionListener { _, _, _ ->
@@ -221,7 +225,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         fabMain.setOnClickListener {
-            handleFabClick()
+            fabMain.animate()
+                .scaleX(0.88f)
+                .scaleY(0.88f)
+                .setDuration(60)
+                .withEndAction {
+                    fabMain.animate()
+                        .scaleX(1.0f)
+                        .scaleY(1.0f)
+                        .setDuration(80)
+                        .start()
+                    handleFabClick()
+                }
+                .start()
         }
     }
 
@@ -367,6 +383,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "Read error: ${err.message}", Toast.LENGTH_SHORT).show()
                 }
                 adapter.notifyDataSetChanged()
+                applyListTransitionAnimation()
             }
         }
     }
@@ -413,13 +430,50 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "Archive error: ${err.message}", Toast.LENGTH_SHORT).show()
                 }
                 adapter.notifyDataSetChanged()
+                applyListTransitionAnimation()
             }
         }
+    }
+
+    private fun applyListTransitionAnimation() {
+        rvFileList.scrollToPosition(0)
+        when (navDirection) {
+            NavDirection.FORWARD -> {
+                rvFileList.translationX = 50f
+                rvFileList.alpha = 0f
+                rvFileList.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(140)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            }
+            NavDirection.BACKWARD -> {
+                rvFileList.translationX = -50f
+                rvFileList.alpha = 0f
+                rvFileList.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(140)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            }
+            NavDirection.REFRESH -> {
+                rvFileList.alpha = 0.5f
+                rvFileList.animate()
+                    .alpha(1f)
+                    .setDuration(120)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            }
+        }
+        navDirection = NavDirection.REFRESH
     }
 
     fun navigateToDirectory(path: String) {
         val f = File(path)
         if (f.exists() && f.isDirectory) {
+            navDirection = NavDirection.FORWARD
             currentPath = f.absolutePath
             isVirtualArchive = false
             exitSelectionMode()
@@ -428,6 +482,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun openVirtualArchive(archivePath: String, innerDir: String) {
+        navDirection = NavDirection.FORWARD
         isVirtualArchive = true
         virtualArchivePath = archivePath
         virtualInnerDir = innerDir
@@ -436,6 +491,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun exitVirtualArchive() {
+        navDirection = NavDirection.BACKWARD
         isVirtualArchive = false
         virtualArchivePath = ""
         virtualInnerDir = ""
@@ -443,6 +499,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateUp() {
+        navDirection = NavDirection.BACKWARD
         if (isVirtualArchive) {
             if (virtualInnerDir.isEmpty()) {
                 exitVirtualArchive()
@@ -456,7 +513,9 @@ class MainActivity : AppCompatActivity() {
             val f = File(currentPath)
             val parent = f.parent
             if (parent != null && f.absolutePath != StorageManager.PRIMARY_STORAGE_PATH && f.absolutePath != "/") {
-                navigateToDirectory(parent)
+                currentPath = parent
+                exitSelectionMode()
+                refreshDirectory()
             }
         }
     }
@@ -489,12 +548,61 @@ class MainActivity : AppCompatActivity() {
 
     private fun toggleSearchBar() {
         if (searchBarContainer.visibility == View.VISIBLE) {
-            searchBarContainer.visibility = View.GONE
-            searchQuery = ""
-            refreshDirectory()
+            searchBarContainer.animate()
+                .translationY(-60f)
+                .alpha(0f)
+                .setDuration(120)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction {
+                    searchBarContainer.visibility = View.GONE
+                    searchBarContainer.translationY = 0f
+                    searchQuery = ""
+                    etSearchQuery.setText("")
+                    refreshDirectory()
+                }
+                .start()
         } else {
             searchBarContainer.visibility = View.VISIBLE
-            etSearchQuery.requestFocus()
+            searchBarContainer.alpha = 0f
+            searchBarContainer.translationY = -60f
+            searchBarContainer.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(140)
+                .setInterpolator(DecelerateInterpolator())
+                .withEndAction {
+                    etSearchQuery.requestFocus()
+                }
+                .start()
+        }
+    }
+
+    private fun showSelectionActionBar() {
+        if (selectionActionBar.visibility != View.VISIBLE) {
+            selectionActionBar.visibility = View.VISIBLE
+            selectionActionBar.alpha = 0f
+            selectionActionBar.translationY = -60f
+            selectionActionBar.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(140)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
+    }
+
+    private fun hideSelectionActionBar() {
+        if (selectionActionBar.visibility == View.VISIBLE) {
+            selectionActionBar.animate()
+                .translationY(-60f)
+                .alpha(0f)
+                .setDuration(120)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction {
+                    selectionActionBar.visibility = View.GONE
+                    selectionActionBar.translationY = 0f
+                }
+                .start()
         }
     }
 
@@ -508,7 +616,7 @@ class MainActivity : AppCompatActivity() {
             exitSelectionMode()
         } else {
             isSelectionMode = true
-            selectionActionBar.visibility = View.VISIBLE
+            showSelectionActionBar()
             tvSelectionCount.text = "${selectedItems.size} selected"
             adapter.notifyDataSetChanged()
         }
@@ -527,19 +635,48 @@ class MainActivity : AppCompatActivity() {
     private fun exitSelectionMode() {
         isSelectionMode = false
         selectedItems.clear()
-        selectionActionBar.visibility = View.GONE
+        hideSelectionActionBar()
         adapter.notifyDataSetChanged()
     }
 
     private fun updateClipboardFab() {
         fabMain.imageTintList = android.content.res.ColorStateList.valueOf(Color.BLACK)
-        if (clipboardPaths.isNotEmpty()) {
-            fabMain.setImageResource(R.drawable.ic_paste)
-            tvFabBadge.visibility = View.VISIBLE
-            tvFabBadge.text = clipboardPaths.size.toString()
+        val isClipboardNow = clipboardPaths.isNotEmpty()
+        if (isClipboardNow != wasClipboardActive) {
+            wasClipboardActive = isClipboardNow
+            fabMain.animate()
+                .rotationBy(if (isClipboardNow) 90f else -90f)
+                .scaleX(0.85f)
+                .scaleY(0.85f)
+                .setDuration(75)
+                .withEndAction {
+                    if (isClipboardNow) {
+                        fabMain.setImageResource(R.drawable.ic_paste)
+                        tvFabBadge.visibility = View.VISIBLE
+                        tvFabBadge.text = clipboardPaths.size.toString()
+                        tvFabBadge.scaleX = 0f
+                        tvFabBadge.scaleY = 0f
+                        tvFabBadge.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+                    } else {
+                        fabMain.setImageResource(R.drawable.ic_add)
+                        tvFabBadge.visibility = View.GONE
+                    }
+                    fabMain.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(75)
+                        .start()
+                }
+                .start()
         } else {
-            fabMain.setImageResource(R.drawable.ic_add)
-            tvFabBadge.visibility = View.GONE
+            if (isClipboardNow) {
+                fabMain.setImageResource(R.drawable.ic_paste)
+                tvFabBadge.visibility = View.VISIBLE
+                tvFabBadge.text = clipboardPaths.size.toString()
+            } else {
+                fabMain.setImageResource(R.drawable.ic_add)
+                tvFabBadge.visibility = View.GONE
+            }
         }
     }
 
@@ -627,6 +764,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFileActionSheet(item: RowItem) {
         val sheet = BottomSheetDialog(this)
+        sheet.window?.setWindowAnimations(R.style.Animation_OPfile_BottomSheet)
         val v = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_file_actions, null)
         sheet.setContentView(v)
 
@@ -770,6 +908,7 @@ class MainActivity : AppCompatActivity() {
                     val v = LayoutInflater.from(this@MainActivity).inflate(R.layout.dialog_donut_wheel, null)
                     dialog.setContentView(v)
                     dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                    dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
 
                     val wheel = v.findViewById<DonutWheelView>(R.id.donut_wheel_view)
                     wheel.setTargetFormats(targets)
@@ -823,6 +962,7 @@ class MainActivity : AppCompatActivity() {
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_compress, null)
         dialog.setContentView(v)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
 
         val etName = v.findViewById<EditText>(R.id.et_archive_name)
         val defaultName = if (paths.size == 1) File(paths[0]).nameWithoutExtension else "archive"
@@ -923,6 +1063,7 @@ class MainActivity : AppCompatActivity() {
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_progress, null)
         dialog.setContentView(v)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
         dialog.setCancelable(false)
 
         val tvTitle = v.findViewById<TextView>(R.id.tv_dialog_task_title)
