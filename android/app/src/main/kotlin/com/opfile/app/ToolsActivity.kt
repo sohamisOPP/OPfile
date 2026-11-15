@@ -1,6 +1,7 @@
 package com.opfile.app
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
@@ -47,7 +48,7 @@ class ToolsActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.btn_run_treemap).setOnClickListener {
-            runTreemapAnalysis()
+            startActivity(Intent(this, TreemapActivity::class.java))
         }
 
         findViewById<View>(R.id.btn_inspect_apk).setOnClickListener {

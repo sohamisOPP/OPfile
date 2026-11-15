@@ -100,6 +100,11 @@ class MainActivity : AppCompatActivity() {
 
         // Handle intent if launched from external VIEW archive action
         handleIncomingArchiveIntent(intent)
+        intent?.getStringExtra("navigate_to_path")?.let { p ->
+            if (File(p).exists()) {
+                currentPath = p
+            }
+        }
 
         checkAndRequestStorage()
     }
@@ -108,6 +113,12 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIncomingArchiveIntent(intent)
+        intent?.getStringExtra("navigate_to_path")?.let { p ->
+            if (File(p).exists()) {
+                exitVirtualArchive()
+                navigateToDirectory(p)
+            }
+        }
     }
 
     private fun handleIncomingArchiveIntent(targetIntent: Intent?) {
@@ -407,9 +418,10 @@ class MainActivity : AppCompatActivity() {
         popup.menu.add(0, 1, 0, "Search").setIcon(R.drawable.ic_search)
         popup.menu.add(0, 2, 1, "Sort by...").setIcon(R.drawable.ic_sort)
         popup.menu.add(0, 3, 2, if (isSelectionMode) "Exit Multi-select" else "Multi-select").setIcon(R.drawable.ic_checklist)
-        popup.menu.add(0, 4, 3, "New Folder").setIcon(R.drawable.ic_folder)
-        popup.menu.add(0, 5, 4, "Refresh").setIcon(R.drawable.ic_refresh)
-        popup.menu.add(0, 6, 5, "Utilities").setIcon(R.drawable.ic_build)
+        popup.menu.add(0, 4, 3, "Cushion Treemap").setIcon(R.drawable.ic_storage)
+        popup.menu.add(0, 5, 4, "New Folder").setIcon(R.drawable.ic_folder)
+        popup.menu.add(0, 6, 5, "Refresh").setIcon(R.drawable.ic_refresh)
+        popup.menu.add(0, 7, 6, "Utilities").setIcon(R.drawable.ic_build)
 
         popup.setForceShowIcon(true)
 
@@ -439,14 +451,20 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 4 -> {
-                    showCreateNewDialog()
+                    startActivity(Intent(this, TreemapActivity::class.java).apply {
+                        putExtra("target_path", currentPath)
+                    })
                     true
                 }
                 5 -> {
-                    refreshDirectory()
+                    showCreateNewDialog()
                     true
                 }
                 6 -> {
+                    refreshDirectory()
+                    true
+                }
+                7 -> {
                     startActivity(Intent(this, ToolsActivity::class.java))
                     true
                 }
