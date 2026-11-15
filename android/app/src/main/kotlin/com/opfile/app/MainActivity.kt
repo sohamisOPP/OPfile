@@ -743,16 +743,26 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val targetsJson = RustCore.getConversionTargets(ext)
             val parsed = RustCore.parseEnvelope(targetsJson) { obj ->
-                val arr = obj.getJSONArray("all_valid_targets")
+                val arr = if (obj.has("primary_targets")) {
+                    obj.optJSONArray("primary_targets")
+                } else {
+                    obj.optJSONArray("all_valid_targets")
+                } ?: JSONArray()
                 val list = mutableListOf<String>()
-                for (i in 0 until arr.length()) list.add(arr.getString(i))
-                list
+                val cleanExt = ext.trimStart('.').lowercase()
+                for (i in 0 until arr.length()) {
+                    val fmt = arr.optString(i, "")
+                    if (fmt.isNotEmpty() && fmt.lowercase() != cleanExt && !list.contains(fmt)) {
+                        list.add(fmt)
+                    }
+                }
+                if (list.size > 10) list.subList(0, 10) else list
             }
 
             withContext(Dispatchers.Main) {
                 parsed.onSuccess { targets ->
                     if (targets.isEmpty()) {
-                        Toast.makeText(this@MainActivity, "No conversion targets for .$ext", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "No conversion or compression targets for .$ext", Toast.LENGTH_SHORT).show()
                         return@onSuccess
                     }
                     val dialog = Dialog(this@MainActivity)
@@ -784,14 +794,16 @@ class MainActivity : AppCompatActivity() {
             put("source_path", sourcePath)
             put("target_format", targetFormat)
         }
+        val isCompress = targetFormat in listOf("zip", "7z", "tar", "tar.gz", "tar.bz2", "tar.xz", "tar.zst", "gz", "bz2", "xz")
+        val actionVerb = if (isCompress) "Compressing to" else "Converting to"
         val taskJson = RustCore.startConvertTask(req.toString())
         val parsed = RustCore.parseEnvelope(taskJson) { it.optLong("task_id") }
         parsed.onSuccess { id ->
             val outName = "${File(sourcePath).nameWithoutExtension}.$targetFormat"
-            TaskForegroundService.startTask(this, id, "Converting to ${targetFormat.uppercase()}", "$currentPath/$outName")
-            showTaskProgressDialog(id, "Converting to ${targetFormat.uppercase()}...")
+            TaskForegroundService.startTask(this, id, "$actionVerb ${targetFormat.uppercase()}", "$currentPath/$outName")
+            showTaskProgressDialog(id, "$actionVerb ${targetFormat.uppercase()}...")
         }.onFailure {
-            Toast.makeText(this, "Convert error: ${it.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Task error: ${it.message}", Toast.LENGTH_SHORT).show()
         }
     }
 

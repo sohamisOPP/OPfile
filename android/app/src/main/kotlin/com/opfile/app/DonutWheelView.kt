@@ -198,13 +198,19 @@ class DonutWheelView @JvmOverloads constructor(
             canvas.drawPath(path, sectorPaint)
             canvas.drawPath(path, sectorBorderPaint)
 
-            // Text on sector
-            val midAngleRad = Math.toRadians((startAngle + sweep / 2f).toDouble())
+            // Text on sector rotated along the sector curve
+            val midAngleDeg = startAngle + sweep / 2f
+            val midAngleRad = Math.toRadians(midAngleDeg.toDouble())
             val textR = (outerR + innerR) / 2f
             val tx = cx + (textR * cos(midAngleRad)).toFloat()
-            val ty = cy + (textR * sin(midAngleRad)).toFloat() + 10f
+            val ty = cy + (textR * sin(midAngleRad)).toFloat()
 
-            canvas.drawText(targets[i].uppercase(), tx, ty, textPaint)
+            canvas.save()
+            canvas.rotate(midAngleDeg + 90f, tx, ty)
+            textPaint.textSize = if (count > 8) 22f else 26f
+            val label = targets[i].uppercase()
+            canvas.drawText(label, tx, ty + 8f, textPaint)
+            canvas.restore()
         }
 
         // Draw top indicator pointer
@@ -231,7 +237,8 @@ class DonutWheelView @JvmOverloads constructor(
 
         // Center selected format text
         val sel = getSelectedFormat() ?: ""
+        val isCompress = sel.lowercase() in listOf("zip", "7z", "tar.gz", "tar.xz", "tar.bz2", "gz", "xz")
         canvas.drawText(sel.uppercase(), cx, cy - 6f, centerTextPaint)
-        canvas.drawText("TAP TO CONVERT", cx, cy + 30f, centerSubPaint)
+        canvas.drawText(if (isCompress) "TAP TO COMPRESS" else "TAP TO CONVERT", cx, cy + 30f, centerSubPaint)
     }
 }

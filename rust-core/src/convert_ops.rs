@@ -62,112 +62,122 @@ pub fn get_valid_targets_for_extension(ext: &str) -> FormatCatalogInfo {
     let total = total_format_count();
 
     let (primary, all_valid, native_codec) = if SUPPORTED_IMAGE_FORMATS.contains(&e.as_str()) {
-        let mut targets: Vec<String> = vec![
-            "png", "jpg", "webp", "avif", "heic", "jxl", "svg", "pdf", "ico", "tiff", "bmp", "gif",
-            "tga", "qoi", "icns", "ktx2", "qr",
+        let targets: Vec<String> = vec![
+            "webp", "png", "jpg", "avif", "gif", "bmp", "pdf", "svg", "zip", "7z",
         ]
         .into_iter()
         .filter(|&t| t != e)
         .map(str::to_string)
         .collect();
-        let all: Vec<String> = SUPPORTED_IMAGE_FORMATS
-            .iter()
-            .chain(["pdf", "qr"].iter())
-            .filter(|&&t| t != e)
-            .map(|&s| s.to_string())
-            .collect();
-        if targets.len() > 12 {
-            targets.truncate(12);
-        }
+        let all = targets.clone();
         (targets, all, matches!(e.as_str(), "heic" | "heif" | "avif"))
     } else if matches!(
         e.as_str(),
         "mp4" | "mkv" | "webm" | "mov" | "avi" | "flv" | "ts" | "m4v" | "3gp" | "wmv" | "ogv"
     ) {
-        let targets = vec![
-            "mp4", "mkv", "webm", "mov", "avi", "gif", "mp3", "aac", "opus", "flac", "wav",
+        let targets: Vec<String> = vec![
+            "mp4", "mkv", "webm", "gif", "mp3", "aac", "wav", "zip", "7z",
         ]
         .into_iter()
         .filter(|&t| t != e)
         .map(str::to_string)
         .collect();
-        let all: Vec<String> = SUPPORTED_AV_FORMATS
-            .iter()
-            .chain(["gif", "webp"].iter())
-            .filter(|&&t| t != e)
-            .map(|&s| s.to_string())
-            .collect();
+        let all = targets.clone();
         (targets, all, true)
     } else if SUPPORTED_AV_FORMATS.contains(&e.as_str()) {
-        let targets = vec!["wav", "flac", "mp3", "aac", "opus", "ogg", "m4a", "aiff", "pcm"]
-            .into_iter()
-            .filter(|&t| t != e)
-            .map(str::to_string)
-            .collect();
-        let all: Vec<String> = SUPPORTED_AV_FORMATS
-            .iter()
-            .filter(|&&t| t != e)
-            .map(|&s| s.to_string())
-            .collect();
+        let targets: Vec<String> = vec![
+            "mp3", "wav", "flac", "aac", "ogg", "opus", "m4a", "zip", "7z",
+        ]
+        .into_iter()
+        .filter(|&t| t != e)
+        .map(str::to_string)
+        .collect();
+        let all = targets.clone();
         (targets, all, false)
     } else if matches!(e.as_str(), "srt" | "vtt" | "ass" | "ssa" | "lrc" | "sbv") {
-        let targets: Vec<String> = vec!["srt", "vtt", "ass", "lrc", "txt"]
+        let targets: Vec<String> = vec!["srt", "vtt", "ass", "txt", "lrc", "zip", "7z"]
             .into_iter()
             .filter(|&t| t != e)
             .map(str::to_string)
             .collect();
-        (targets.clone(), targets, false)
+        let all = targets.clone();
+        (targets, all, false)
     } else if matches!(
         e.as_str(),
         "json" | "yaml" | "yml" | "toml" | "xml" | "csv" | "tsv" | "xlsx" | "sqlite" | "db"
             | "parquet" | "ini" | "env"
     ) {
         let targets: Vec<String> = vec![
-            "json", "yaml", "toml", "xml", "csv", "tsv", "xlsx", "sqlite", "parquet", "ini", "pdf",
+            "json", "csv", "xml", "yaml", "sqlite", "parquet", "pdf", "zip", "7z",
         ]
         .into_iter()
         .filter(|&t| t != e)
         .map(str::to_string)
         .collect();
-        (targets.clone(), targets, false)
+        let all = targets.clone();
+        (targets, all, false)
+    } else if matches!(
+        e.as_str(),
+        "pdf" | "docx" | "doc" | "odt" | "rtf" | "epub" | "html" | "htm" | "md" | "txt"
+    ) {
+        let targets: Vec<String> = vec!["pdf", "txt", "md", "html", "docx", "epub", "zip", "7z"]
+            .into_iter()
+            .filter(|&t| t != e)
+            .map(str::to_string)
+            .collect();
+        let all = targets.clone();
+        (targets, all, false)
     } else if matches!(e.as_str(), "obj" | "stl" | "ply" | "gltf" | "glb" | "dxf" | "fbx") {
-        let targets: Vec<String> = vec!["obj", "stl", "ply", "gltf", "dxf"]
+        let targets: Vec<String> = vec!["obj", "stl", "ply", "gltf", "dxf", "zip", "7z"]
             .into_iter()
             .filter(|&t| t != e)
             .map(str::to_string)
             .collect();
-        (targets.clone(), targets, false)
+        let all = targets.clone();
+        (targets, all, false)
     } else if matches!(e.as_str(), "gpx" | "kml" | "geojson" | "wkt") {
-        let targets: Vec<String> = vec!["geojson", "gpx", "kml", "wkt"]
+        let targets: Vec<String> = vec!["geojson", "gpx", "kml", "wkt", "zip", "7z"]
             .into_iter()
             .filter(|&t| t != e)
             .map(str::to_string)
             .collect();
-        (targets.clone(), targets, false)
+        let all = targets.clone();
+        (targets, all, false)
     } else if matches!(e.as_str(), "pem" | "der" | "crt" | "cer") {
-        let targets: Vec<String> = vec!["pem", "der", "crt"]
+        let targets: Vec<String> = vec!["pem", "der", "crt", "zip", "7z"]
             .into_iter()
             .filter(|&t| t != e)
             .map(str::to_string)
             .collect();
-        (targets.clone(), targets, false)
+        let all = targets.clone();
+        (targets, all, false)
     } else if matches!(e.as_str(), "ttf" | "otf" | "woff2") {
-        let targets: Vec<String> = vec!["woff2", "ttf", "otf"]
+        let targets: Vec<String> = vec!["woff2", "ttf", "otf", "zip", "7z"]
             .into_iter()
             .filter(|&t| t != e)
             .map(str::to_string)
             .collect();
-        (targets.clone(), targets, false)
+        let all = targets.clone();
+        (targets, all, false)
+    } else if matches!(
+        e.as_str(),
+        "zip" | "7z" | "rar" | "tar" | "gz" | "bz2" | "xz" | "zst" | "tgz" | "tbz2" | "txz"
+    ) {
+        let targets: Vec<String> = vec!["zip", "7z", "tar.gz", "tar.xz"]
+            .into_iter()
+            .filter(|&t| t != e)
+            .map(str::to_string)
+            .collect();
+        let all = targets.clone();
+        (targets, all, false)
     } else {
-        let targets: Vec<String> = vec![
-            "pdf", "txt", "md", "html", "docx", "epub", "rtf", "tex", "zip", "7z", "tar.gz", "opx",
-            "qr",
-        ]
-        .into_iter()
-        .filter(|&t| t != e)
-        .map(str::to_string)
-        .collect();
-        (targets.clone(), targets, false)
+        let targets: Vec<String> = vec!["zip", "7z", "tar.gz", "qr"]
+            .into_iter()
+            .filter(|&t| t != e)
+            .map(str::to_string)
+            .collect();
+        let all = targets.clone();
+        (targets, all, false)
     };
 
     FormatCatalogInfo {
