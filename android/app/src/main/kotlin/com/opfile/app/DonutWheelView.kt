@@ -20,9 +20,13 @@ class DonutWheelView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    var onSliceSelectedListener: ((WheelSliceItem) -> Unit)? = null
     var onFormatSelectedListener: ((String) -> Unit)? = null
 
-    private var targets: List<String> = emptyList()
+    private var slices: List<WheelSliceItem> = emptyList()
+    private var categoryTitle: String = "Convert"
+    private var categoryCountText: String = ""
+
     private var currentRotation: Float = 0f
     private var lastTickIndex: Int = -1
     private var flingAnimator: ValueAnimator? = null
@@ -41,27 +45,29 @@ class DonutWheelView @JvmOverloads constructor(
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
-        textSize = 34f
+        textSize = 24f
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+
+    private val sliceSubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#A0A0A0")
+        textSize = 17f
+        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
         textAlign = Paint.Align.CENTER
     }
 
     private val centerTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
-        textSize = 42f
+        textSize = 36f
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
 
     private val centerSubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#9E9E9E")
-        textSize = 24f
+        textSize = 22f
         textAlign = Paint.Align.CENTER
-    }
-
-    private val pointerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        style = Paint.Style.FILL
     }
 
     private val ringRect = RectF()
@@ -120,34 +126,51 @@ class DonutWheelView @JvmOverloads constructor(
             val dy = e.y - cy
             val dist = hypot(dx.toDouble(), dy.toDouble()).toFloat()
             val outerR = min(width, height) * 0.44f
-            val innerR = outerR * 0.52f
+            val innerR = outerR * 0.50f
 
-            if (targets.isEmpty()) return false
+            if (slices.isEmpty()) return false
 
             if (dist in innerR..outerR) {
-                // Tapped directly on a sector: select that tapped sector format
+                // Tapped directly on a sector: select that tapped sector
                 val touchAngle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
-                val sweep = 360f / targets.size
+                val sweep = 360f / slices.size
                 val normalized = ((touchAngle - currentRotation) % 360f + 360f) % 360f
-                val tappedIdx = (normalized / sweep).toInt().coerceIn(0, targets.size - 1)
-                val fmt = targets[tappedIdx]
+                val tappedIdx = (normalized / sweep).toInt().coerceIn(0, slices.size - 1)
+                val slice = slices[tappedIdx]
                 performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                onFormatSelectedListener?.invoke(fmt)
+                dispatchSliceSelected(slice)
                 return true
             } else if (dist < innerR) {
-                // Tapped center circle: confirm the currently active format
-                val fmt = getSelectedFormat() ?: targets[0]
+                // Tapped center circle: confirm the currently active sector
+                val slice = getSelectedSlice() ?: slices[0]
                 performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                onFormatSelectedListener?.invoke(fmt)
+                dispatchSliceSelected(slice)
                 return true
             }
             return false
         }
     })
 
+    private fun dispatchSliceSelected(slice: WheelSliceItem) {
+        onSliceSelectedListener?.invoke(slice)
+        onFormatSelectedListener?.invoke(slice.targetFormat)
+    }
+
+    fun setWheelProfile(profile: WheelProfile) {
+        flingAnimator?.cancel()
+        categoryTitle = profile.name
+        categoryCountText = profile.countText
+        slices = profile.slices
+        currentRotation = 0f
+        lastTickIndex = -1
+        invalidate()
+    }
+
     fun setTargetFormats(list: List<String>) {
         flingAnimator?.cancel()
-        targets = list
+        categoryTitle = "Convert"
+        categoryCountText = "${list.size} / 12"
+        slices = list.map { WheelSliceItem(it.uppercase(), null, it) }
         currentRotation = 0f
         lastTickIndex = -1
         invalidate()
@@ -171,16 +194,20 @@ class DonutWheelView @JvmOverloads constructor(
     }
 
     private fun getSelectedIndex(): Int {
-        if (targets.isEmpty()) return -1
-        val sweep = 360f / targets.size
+        if (slices.isEmpty()) return -1
+        val sweep = 360f / slices.size
         // 270 degrees is top center (selection pointer)
         val normalized = ((-currentRotation + 270f) % 360f + 360f) % 360f
-        return (normalized / sweep).toInt() % targets.size
+        return (normalized / sweep).toInt() % slices.size
+    }
+
+    fun getSelectedSlice(): WheelSliceItem? {
+        val idx = getSelectedIndex()
+        return if (idx in slices.indices) slices[idx] else null
     }
 
     fun getSelectedFormat(): String? {
-        val idx = getSelectedIndex()
-        return if (idx in targets.indices) targets[idx] else null
+        return getSelectedSlice()?.targetFormat
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -198,17 +225,17 @@ class DonutWheelView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (targets.isEmpty()) return
+        if (slices.isEmpty()) return
 
         val cx = width / 2f
         val cy = height / 2f
         val outerR = min(width, height) * 0.44f
-        val innerR = outerR * 0.52f
+        val innerR = outerR * 0.50f
 
         ringRect.set(cx - outerR, cy - outerR, cx + outerR, cy + outerR)
         innerRect.set(cx - innerR, cy - innerR, cx + innerR, cy + innerR)
 
-        val count = targets.size
+        val count = slices.size
         val sweep = 360f / count
         val selectedIdx = getSelectedIndex()
 
@@ -218,7 +245,8 @@ class DonutWheelView @JvmOverloads constructor(
             val isSelected = (i == selectedIdx)
             val isEven = (i % 2 == 0)
 
-            sectorPaint.color = if (isSelected) Color.parseColor("#2E2E32") else (if (isEven) Color.parseColor("#1C1C1E") else Color.parseColor("#121212"))
+            sectorPaint.color = if (isSelected) Color.parseColor("#2E2E32")
+                else (if (isEven) Color.parseColor("#1C1C1E") else Color.parseColor("#121212"))
 
             val path = Path()
             path.arcTo(ringRect, startAngle, sweep)
@@ -242,12 +270,51 @@ class DonutWheelView @JvmOverloads constructor(
             val tx = cx + (textR * cos(midAngleRad)).toFloat()
             val ty = cy + (textR * sin(midAngleRad)).toFloat()
 
-            textPaint.textSize = if (count > 8) 22f else 26f
+            val slice = slices[i]
+            val hasSubtitle = !slice.subtitle.isNullOrEmpty()
+
+            textPaint.textSize = when {
+                slice.label.length > 12 -> 17f
+                slice.label.length > 8 -> 19f
+                count > 10 -> 21f
+                else -> 24f
+            }
             textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#D0D0D0")
-            val label = targets[i].uppercase()
-            val fm = textPaint.fontMetrics
-            val baseline = ty - (fm.descent + fm.ascent) / 2f
-            canvas.drawText(label, tx, baseline, textPaint)
+
+            if (hasSubtitle) {
+                // If label has multiple words (e.g. "Trace to SVG"), handle neatly
+                val labelLines = if (slice.label.contains(" ") && slice.label.length > 8) {
+                    slice.label.split(" ", limit = 2)
+                } else {
+                    listOf(slice.label)
+                }
+
+                if (labelLines.size > 1) {
+                    canvas.drawText(labelLines[0], tx, ty - 16f, textPaint)
+                    canvas.drawText(labelLines[1], tx, ty + 2f, textPaint)
+                    canvas.drawText(slice.subtitle!!, tx, ty + 20f, sliceSubPaint)
+                } else {
+                    canvas.drawText(slice.label, tx, ty - 6f, textPaint)
+                    canvas.drawText(slice.subtitle!!, tx, ty + 15f, sliceSubPaint)
+                }
+            } else {
+                val words = if (slice.label.contains(" ") && slice.label.length > 9) {
+                    slice.label.split(" ", limit = 2)
+                } else {
+                    listOf(slice.label)
+                }
+
+                if (words.size > 1) {
+                    val fm = textPaint.fontMetrics
+                    val lineH = fm.descent - fm.ascent
+                    canvas.drawText(words[0], tx, ty - lineH / 4f, textPaint)
+                    canvas.drawText(words[1], tx, ty + lineH * 3f / 4f, textPaint)
+                } else {
+                    val fm = textPaint.fontMetrics
+                    val baseline = ty - (fm.descent + fm.ascent) / 2f
+                    canvas.drawText(slice.label, tx, baseline, textPaint)
+                }
+            }
         }
 
         // Center circle (translucent glass AMOLED)
@@ -263,10 +330,9 @@ class DonutWheelView @JvmOverloads constructor(
         }
         canvas.drawCircle(cx, cy, innerR - 4f, centerBorder)
 
-        // Center selected format text
-        val sel = getSelectedFormat() ?: (if (targets.isNotEmpty()) targets[0] else "")
-        val isCompress = sel.lowercase() in listOf("zip", "7z", "tar.gz", "tar.xz", "tar.bz2", "gz", "xz")
-        canvas.drawText(sel.uppercase(), cx, cy - 6f, centerTextPaint)
-        canvas.drawText(if (isCompress) "TAP TO COMPRESS" else "TAP TO CONVERT", cx, cy + 30f, centerSubPaint)
+        // Center text: Category Title on top, Count text below (matches screenshots 100%)
+        centerTextPaint.textSize = if (categoryTitle.length > 12) 30f else 36f
+        canvas.drawText(categoryTitle, cx, cy - 8f, centerTextPaint)
+        canvas.drawText(categoryCountText, cx, cy + 26f, centerSubPaint)
     }
 }

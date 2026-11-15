@@ -1106,54 +1106,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDonutWheelDialog(filePath: String, ext: String) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val targetsJson = RustCore.getConversionTargets(ext)
-            val parsed = RustCore.parseEnvelope(targetsJson) { obj ->
-                val arr = if (obj.has("primary_targets")) {
-                    obj.optJSONArray("primary_targets")
-                } else {
-                    obj.optJSONArray("all_valid_targets")
-                } ?: JSONArray()
-                val list = mutableListOf<String>()
-                val cleanExt = ext.trimStart('.').lowercase()
-                for (i in 0 until arr.length()) {
-                    val fmt = arr.optString(i, "")
-                    if (fmt.isNotEmpty() && fmt.lowercase() != cleanExt && !list.contains(fmt)) {
-                        list.add(fmt)
-                    }
+        val profile = WheelProfiles.getProfileForExtension(ext)
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val v = LayoutInflater.from(this).inflate(R.layout.dialog_donut_wheel, null)
+        dialog.setContentView(v)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
+
+        v.findViewById<TextView>(R.id.tv_donut_title)?.text = profile.name
+        v.findViewById<TextView>(R.id.tv_donut_subtitle)?.text = "${File(filePath).name} • ${profile.countText} options"
+
+        val wheel = v.findViewById<DonutWheelView>(R.id.donut_wheel_view)
+        wheel.setWheelProfile(profile)
+        wheel.onSliceSelectedListener = { slice ->
+            dialog.dismiss()
+            when (slice.actionType) {
+                "extract" -> {
+                    val parentDir = File(filePath).parentFile ?: File(currentPath)
+                    val destDir = File(parentDir, File(filePath).nameWithoutExtension).absolutePath
+                    startExtractJob(filePath, destDir)
                 }
-                if (list.size > 10) list.subList(0, 10) else list
-            }
-
-            withContext(Dispatchers.Main) {
-                parsed.onSuccess { targets ->
-                    if (targets.isEmpty()) {
-                        Toast.makeText(this@MainActivity, "No conversion or compression targets for .$ext", Toast.LENGTH_SHORT).show()
-                        return@onSuccess
-                    }
-                    val dialog = Dialog(this@MainActivity)
-                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-                    val v = LayoutInflater.from(this@MainActivity).inflate(R.layout.dialog_donut_wheel, null)
-                    dialog.setContentView(v)
-                    dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-                    dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
-
-                    val wheel = v.findViewById<DonutWheelView>(R.id.donut_wheel_view)
-                    wheel.setTargetFormats(targets)
-                    wheel.onFormatSelectedListener = { targetFmt ->
-                        dialog.dismiss()
-                        executeFormatConversion(filePath, targetFmt)
-                    }
-
-                    v.findViewById<View>(R.id.btn_donut_cancel).setOnClickListener {
-                        dialog.dismiss()
-                    }
-                    dialog.show()
-                }.onFailure {
-                    Toast.makeText(this@MainActivity, "Targets error: ${it.message}", Toast.LENGTH_SHORT).show()
+                else -> {
+                    executeFormatConversion(filePath, slice.targetFormat)
                 }
             }
         }
+
+        v.findViewById<View>(R.id.btn_donut_cancel).setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun executeFormatConversion(sourcePath: String, targetFormat: String) {
