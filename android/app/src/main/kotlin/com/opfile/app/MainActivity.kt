@@ -1004,18 +1004,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executeFormatConversion(sourcePath: String, targetFormat: String) {
+        val parentDir = File(sourcePath).parentFile ?: File(currentPath)
+        val convertedDir = File(parentDir, "converted")
+        if (!convertedDir.exists()) {
+            convertedDir.mkdirs()
+        }
+        val outName = "${File(sourcePath).nameWithoutExtension}.$targetFormat"
+        val destFile = File(convertedDir, outName)
+
         val req = JSONObject().apply {
             put("source_path", sourcePath)
             put("target_format", targetFormat)
+            put("dest_path", destFile.absolutePath)
         }
         val isCompress = targetFormat in listOf("zip", "7z", "tar", "tar.gz", "tar.bz2", "tar.xz", "tar.zst", "gz", "bz2", "xz")
         val actionVerb = if (isCompress) "Compressing to" else "Converting to"
         val taskJson = RustCore.startConvertTask(req.toString())
         val parsed = RustCore.parseEnvelope(taskJson) { it.optLong("task_id") }
         parsed.onSuccess { id ->
-            val outName = "${File(sourcePath).nameWithoutExtension}.$targetFormat"
-            TaskForegroundService.startTask(this, id, "$actionVerb ${targetFormat.uppercase()}", "$currentPath/$outName")
+            TaskForegroundService.startTask(this, id, "$actionVerb ${targetFormat.uppercase()}", destFile.absolutePath)
             showTaskProgressDialog(id, "$actionVerb ${targetFormat.uppercase()}...")
+            android.media.MediaScannerConnection.scanFile(this, arrayOf(destFile.absolutePath), null, null)
         }.onFailure {
             Toast.makeText(this, "Task error: ${it.message}", Toast.LENGTH_SHORT).show()
         }
