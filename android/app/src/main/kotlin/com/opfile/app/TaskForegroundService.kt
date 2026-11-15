@@ -136,7 +136,8 @@ class TaskForegroundService : Service() {
                 totalBytes = d.optLong("total_bytes"),
                 state = d.optString("state"),
                 currentFile = d.optString("current_file"),
-                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.optString("error_message") else null
+                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.optString("error_message") else null,
+                resultJson = if (d.has("result_json") && !d.isNull("result_json")) d.optString("result_json") else null
             )
         } catch (e: Exception) {
             null

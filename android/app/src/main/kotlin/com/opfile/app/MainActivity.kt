@@ -197,6 +197,18 @@ class MainActivity : AppCompatActivity() {
             toggleSearchBar()
         }
 
+        etSearchQuery.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val q = s?.toString()?.trim() ?: ""
+                if (q != searchQuery) {
+                    searchQuery = q
+                    refreshDirectory()
+                }
+            }
+        })
+
         etSearchQuery.setOnEditorActionListener { _, _, _ ->
             searchQuery = etSearchQuery.text.toString().trim()
             refreshDirectory()
@@ -497,7 +509,12 @@ class MainActivity : AppCompatActivity() {
                         displayEntries.add(RowItem.fromVirtualEntry(v, virtualArchivePath, virtualInnerDir))
                     }
                 }.onFailure { err ->
-                    Toast.makeText(this@MainActivity, "Archive error: ${err.message}", Toast.LENGTH_SHORT).show()
+                    val msg = err.message ?: ""
+                    if (msg.contains("password", true) || msg.contains("encrypt", true) || msg.contains("crypto", true)) {
+                        promptArchivePassword(virtualArchivePath)
+                    } else {
+                        Toast.makeText(this@MainActivity, "Archive error: $msg", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 adapter.notifyDataSetChanged()
                 applyListTransitionAnimation()
@@ -558,6 +575,32 @@ class MainActivity : AppCompatActivity() {
         virtualInnerDir = innerDir
         exitSelectionMode()
         refreshDirectory()
+    }
+
+    private fun promptArchivePassword(archivePath: String) {
+        val input = EditText(this).apply {
+            hint = "Archive Password"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Password Required")
+            .setMessage("This archive is password-protected. Enter password to view:")
+            .setView(input)
+            .setPositiveButton("Unlock") { _, _ ->
+                val pw = input.text.toString()
+                if (pw.isNotEmpty()) {
+                    virtualPassword = pw
+                    loadVirtualArchiveDir()
+                }
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                exitVirtualArchive()
+                refreshDirectory()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun exitVirtualArchive() {
@@ -796,12 +839,12 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Create")
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> showInputDialog("New Folder", "Folder name") { name ->
+                    0 -> showInputDialog("New Folder", "Folder name", positiveLabel = "Create") { name ->
                         val target = "$currentPath/$name"
                         RustCore.createFolder(target)
                         refreshDirectory()
                     }
-                    1 -> showInputDialog("New File", "File name") { name ->
+                    1 -> showInputDialog("New File", "File name", positiveLabel = "Create") { name ->
                         val target = "$currentPath/$name"
                         RustCore.createEmptyFile(target)
                         refreshDirectory()
@@ -814,18 +857,36 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showInputDialog(title: String, hint: String, onConfirm: (String) -> Unit) {
+    private fun showInputDialog(
+        title: String,
+        hint: String,
+        initialText: String = "",
+        positiveLabel: String = "OK",
+        onConfirm: (String) -> Unit
+    ) {
         val input = EditText(this).apply {
             this.hint = hint
+            if (initialText.isNotEmpty()) {
+                setText(initialText)
+                val dot = initialText.lastIndexOf('.')
+                setSelection(0, if (dot > 0) dot else initialText.length)
+            }
             setTextColor(Color.WHITE)
             setHintTextColor(Color.GRAY)
         }
         AlertDialog.Builder(this)
             .setTitle(title)
             .setView(input)
-            .setPositiveButton("Create") { _, _ ->
+            .setPositiveButton(positiveLabel) { _, _ ->
                 val txt = input.text.toString().trim()
-                if (txt.isNotEmpty()) onConfirm(txt)
+                    .replace("/", "")
+                    .replace("\\", "")
+                    .replace("\u0000", "")
+                if (txt.isNotEmpty()) {
+                    onConfirm(txt)
+                } else {
+                    Toast.makeText(this, "Name cannot be empty or contain slashes", Toast.LENGTH_SHORT).show()
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -863,11 +924,24 @@ class MainActivity : AppCompatActivity() {
         val extractHereBtn = v.findViewById<View>(R.id.action_extract_here)
         val extractToBtn = v.findViewById<View>(R.id.action_extract_to)
         val testArchiveBtn = v.findViewById<View>(R.id.action_test_archive)
+        val openExternalBtn = v.findViewById<View>(R.id.action_open_external)
 
         if (!isArchive) {
             extractHereBtn.visibility = View.GONE
             extractToBtn.visibility = View.GONE
             testArchiveBtn.visibility = View.GONE
+        }
+
+        if (item.isDir || item.isParentRow || isVirtualArchive) {
+            openExternalBtn.visibility = View.GONE
+        } else {
+            openExternalBtn.visibility = View.VISIBLE
+            val isApk = item.name.lowercase().endsWith(".apk")
+            v.findViewById<TextView>(R.id.tv_action_open_external)?.text = if (isApk) "Install APK..." else "Open with other app / Share..."
+            openExternalBtn.setOnClickListener {
+                sheet.dismiss()
+                openWithExternalApp(item)
+            }
         }
 
         v.findViewById<View>(R.id.action_open_view).setOnClickListener {
@@ -926,7 +1000,7 @@ class MainActivity : AppCompatActivity() {
 
         v.findViewById<View>(R.id.action_rename).setOnClickListener {
             sheet.dismiss()
-            showInputDialog("Rename", item.name) { newName ->
+            showInputDialog("Rename", "New name", initialText = item.name, positiveLabel = "Rename") { newName ->
                 RustCore.renameEntry(item.path, newName)
                 refreshDirectory()
             }
@@ -959,6 +1033,36 @@ class MainActivity : AppCompatActivity() {
             putExtra(ViewerActivity.EXTRA_ENTRY_PATH, item.virtualFullPath ?: "")
         }
         startActivity(intent)
+    }
+
+    private fun openWithExternalApp(item: RowItem) {
+        try {
+            val file = File(item.path)
+            if (!file.exists()) {
+                Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
+                return
+            }
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                file
+            )
+            val isApk = file.extension.lowercase() == "apk"
+            val mime = if (isApk) {
+                "application/vnd.android.package-archive"
+            } else {
+                android.webkit.MimeTypeMap.getSingleton()
+                    .getMimeTypeFromExtension(file.extension.lowercase()) ?: "*/*"
+            }
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, mime)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(if (isApk) intent else Intent.createChooser(intent, "Open with..."))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot open: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun showDonutWheelDialog(filePath: String, ext: String) {
@@ -1039,15 +1143,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startExtractJob(archivePath: String, destDir: String) {
-        val taskJson = RustCore.startExtractTask(archivePath, destDir, "", "")
+    private fun startExtractJob(archivePath: String, destDir: String, password: String = virtualPassword) {
+        val taskJson = RustCore.startExtractTask(archivePath, destDir, password, "")
         val parsed = RustCore.parseEnvelope(taskJson) { it.optLong("task_id") }
         parsed.onSuccess { id ->
             TaskForegroundService.startTask(this, id, "Extracting Archive", destDir)
             showTaskProgressDialog(id, "Extracting Archive...")
         }.onFailure {
-            Toast.makeText(this, "Extract error: ${it.message}", Toast.LENGTH_SHORT).show()
+            val msg = it.message ?: ""
+            if (msg.contains("password", true) || msg.contains("encrypt", true)) {
+                promptExtractPassword(archivePath, destDir)
+            } else {
+                Toast.makeText(this, "Extract error: $msg", Toast.LENGTH_SHORT).show()
+            }
         }
+    }
+
+    private fun promptExtractPassword(archivePath: String, destDir: String) {
+        val input = EditText(this).apply {
+            hint = "Archive Password"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Password Required for Extraction")
+            .setMessage("This archive is encrypted. Enter password to extract:")
+            .setView(input)
+            .setPositiveButton("Extract") { _, _ ->
+                val pw = input.text.toString()
+                if (pw.isNotEmpty()) {
+                    virtualPassword = pw
+                    startExtractJob(archivePath, destDir, pw)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showCompressDialog(paths: List<String>) {
@@ -1208,12 +1339,23 @@ class MainActivity : AppCompatActivity() {
                     if (snap.state == "Completed") {
                         dialog.dismiss()
                         refreshDirectory()
-                        Toast.makeText(this@MainActivity, "Task Completed", Toast.LENGTH_SHORT).show()
+                        if (title.contains("Checksum", true) && !snap.resultJson.isNullOrEmpty()) {
+                            showChecksumResultDialog(snap.resultJson)
+                        } else if (title.contains("Testing Archive", true) && !snap.resultJson.isNullOrEmpty()) {
+                            showIntegrityResultDialog(snap.resultJson)
+                        } else {
+                            Toast.makeText(this@MainActivity, "Task Completed", Toast.LENGTH_SHORT).show()
+                        }
                         break
                     } else if (snap.state == "Failed") {
                         dialog.dismiss()
                         refreshDirectory()
-                        Toast.makeText(this@MainActivity, "Task Failed: ${snap.errorMessage}", Toast.LENGTH_LONG).show()
+                        val err = snap.errorMessage ?: ""
+                        if ((err.contains("password", true) || err.contains("encrypt", true)) && title.contains("Extract", true)) {
+                            promptExtractPassword(snap.currentFile, currentPath)
+                        } else {
+                            Toast.makeText(this@MainActivity, "Task Failed: $err", Toast.LENGTH_LONG).show()
+                        }
                         break
                     } else if (snap.state == "Canceled") {
                         dialog.dismiss()
@@ -1224,6 +1366,70 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showChecksumResultDialog(resultJson: String) {
+        try {
+            val obj = JSONObject(resultJson)
+            val name = File(obj.optString("path")).name
+            val size = formatBytes(obj.optLong("size"))
+            val sha256 = obj.optString("sha256")
+            val md5 = obj.optString("md5")
+            val sha512 = obj.optString("sha512")
+            val blake3 = obj.optString("blake3")
+
+            val msg = "File: $name ($size)\n\n" +
+                    "SHA-256:\n$sha256\n\n" +
+                    "MD5:\n$md5\n\n" +
+                    "BLAKE3:\n$blake3\n\n" +
+                    "SHA-512:\n$sha512"
+
+            AlertDialog.Builder(this)
+                .setTitle("Checksum Verification")
+                .setMessage(msg)
+                .setPositiveButton("Copy SHA-256") { _, _ ->
+                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("SHA-256", sha256))
+                    Toast.makeText(this, "SHA-256 copied to clipboard", Toast.LENGTH_SHORT).show()
+                }
+                .setNeutralButton("Copy All") { _, _ ->
+                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Checksums", msg))
+                    Toast.makeText(this, "All checksums copied to clipboard", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Close", null)
+                .show()
+        } catch (_: Exception) {}
+    }
+
+    private fun showIntegrityResultDialog(resultJson: String) {
+        try {
+            val obj = JSONObject(resultJson)
+            val passed = obj.optBoolean("passed", false)
+            val total = obj.optInt("checked_entries", 0)
+            val failedArr = obj.optJSONArray("failed_entries")
+            val failedCount = failedArr?.length() ?: 0
+
+            val title = if (passed) "Integrity Check: PASSED" else "Integrity Check: FAILED"
+            val msg = if (passed) {
+                "Archive is completely intact.\nSuccessfully verified $total entries without CRC/decompression errors."
+            } else {
+                val sb = StringBuilder()
+                sb.append("Corrupted archive detected!\n$failedCount out of $total entries failed CRC/decompression check:\n\n")
+                if (failedArr != null) {
+                    for (i in 0 until minOf(failedArr.length(), 10)) {
+                        sb.append("• ").append(failedArr.optString(i)).append("\n")
+                    }
+                }
+                sb.toString()
+            }
+
+            AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(msg)
+                .setPositiveButton("OK", null)
+                .show()
+        } catch (_: Exception) {}
     }
 
     private fun parseDialogSnapshot(json: String): TaskSnapshotInfo? {
@@ -1241,7 +1447,8 @@ class MainActivity : AppCompatActivity() {
                 totalBytes = d.optLong("total_bytes"),
                 state = d.optString("state"),
                 currentFile = d.optString("current_file"),
-                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.optString("error_message") else null
+                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.optString("error_message") else null,
+                resultJson = if (d.has("result_json") && !d.isNull("result_json")) d.optString("result_json") else null
             )
         } catch (e: Exception) {
             null

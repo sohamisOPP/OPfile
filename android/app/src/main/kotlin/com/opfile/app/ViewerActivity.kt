@@ -39,6 +39,8 @@ class ViewerActivity : AppCompatActivity() {
     private var entryPath: String = ""
 
     private var isHexMode: Boolean = false
+    private var initialText: String = ""
+    private var isTextLoaded: Boolean = false
 
     private lateinit var tvTitle: TextView
     private lateinit var btnSave: ImageView
@@ -87,7 +89,7 @@ class ViewerActivity : AppCompatActivity() {
         tvTitle.text = fileName
 
         findViewById<View>(R.id.viewer_btn_back).setOnClickListener {
-            finish()
+            onBackPressed()
         }
 
         findViewById<View>(R.id.viewer_btn_mode).setOnClickListener {
@@ -163,10 +165,6 @@ class ViewerActivity : AppCompatActivity() {
                 BitmapFactory.decodeStream(stream, null, options)
             }
 
-            if (options.outWidth <= 0 || options.outHeight <= 0) {
-                return BitmapFactory.decodeFile(file.absolutePath)
-            }
-
             var inSampleSize = 1
             if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
                 val halfHeight = options.outHeight / 2
@@ -181,9 +179,35 @@ class ViewerActivity : AppCompatActivity() {
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             }
 
-            file.inputStream().use { stream ->
+            var bmp = file.inputStream().use { stream ->
                 BitmapFactory.decodeStream(stream, null, decodeOptions)
             } ?: BitmapFactory.decodeFile(file.absolutePath, decodeOptions)
+
+            if (bmp != null) {
+                try {
+                    val exif = android.media.ExifInterface(file.absolutePath)
+                    val orientation = exif.getAttributeInt(
+                        android.media.ExifInterface.TAG_ORIENTATION,
+                        android.media.ExifInterface.ORIENTATION_NORMAL
+                    )
+                    val matrix = android.graphics.Matrix()
+                    when (orientation) {
+                        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                        android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+                        android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+                    }
+                    if (!matrix.isIdentity) {
+                        val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+                        if (rotated != bmp) {
+                            bmp.recycle()
+                            bmp = rotated
+                        }
+                    }
+                } catch (_: Throwable) {}
+            }
+            bmp
         } catch (e: Throwable) {
             null
         }
@@ -265,9 +289,14 @@ class ViewerActivity : AppCompatActivity() {
             val targetFile = resolveFileForViewing()
             val path = targetFile?.absolutePath ?: filePath
             val resJson = RustCore.readTextBounded(path, 2 * 1024 * 1024)
-            val parsed = RustCore.parseEnvelope(resJson) { it.optString("content", "") }
+            val parsed = RustCore.parseEnvelope(resJson) { obj ->
+                if (obj.has("content")) obj.optString("content", "")
+                else obj.optString("value", "")
+            }
             withContext(Dispatchers.Main) {
                 parsed.onSuccess { content ->
+                    initialText = content
+                    isTextLoaded = true
                     etCode.setText(content)
                 }.onFailure {
                     showError("Unable to read as text document: ${it.message}")
@@ -356,15 +385,40 @@ class ViewerActivity : AppCompatActivity() {
     private fun saveCurrentText() {
         val newText = etCode.text.toString()
         lifecycleScope.launch(Dispatchers.IO) {
-            if (isArchiveEntry) {
+            val resJson = if (isArchiveEntry) {
                 RustCore.updateArchiveEntry(archivePath, entryPath, newText, "")
             } else {
                 RustCore.writeTextAtomic(filePath, newText)
             }
+            val parsed = RustCore.parseEnvelope(resJson) { true }
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@ViewerActivity, "Saved", Toast.LENGTH_SHORT).show()
+                parsed.onSuccess {
+                    initialText = newText
+                    Toast.makeText(this@ViewerActivity, "Saved successfully", Toast.LENGTH_SHORT).show()
+                }.onFailure { err ->
+                    Toast.makeText(this@ViewerActivity, "Save failed: ${err.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
+    }
+
+    override fun onBackPressed() {
+        if (textContainer.visibility == View.VISIBLE && isTextLoaded && etCode.text.toString() != initialText) {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Unsaved Changes")
+                .setMessage("You have unsaved changes in this document. Do you want to discard them?")
+                .setPositiveButton("Discard") { _, _ ->
+                    super.onBackPressed()
+                }
+                .setNeutralButton("Save") { _, _ ->
+                    saveCurrentText()
+                    super.onBackPressed()
+                }
+                .setNegativeButton("Keep Editing", null)
+                .show()
+            return
+        }
+        super.onBackPressed()
     }
 
     private fun hideAllContainers() {

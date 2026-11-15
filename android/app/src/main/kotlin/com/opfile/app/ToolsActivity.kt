@@ -120,14 +120,13 @@ class ToolsActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val qrJson = RustCore.generateQrMatrix(text)
             val parsed = RustCore.parseEnvelope(qrJson) { obj ->
-                val w = obj.getInt("width")
-                val h = obj.getInt("height")
-                val mat = obj.getJSONArray("matrix")
+                val w = obj.optInt("width", 25)
+                val h = w
+                val modules = obj.optJSONArray("modules")
                 val bools = BooleanArray(w * h)
-                for (y in 0 until h) {
-                    val row = mat.getJSONArray(y)
-                    for (x in 0 until w) {
-                        bools[y * w + x] = row.getBoolean(x)
+                if (modules != null) {
+                    for (i in 0 until minOf(bools.size, modules.length())) {
+                        bools[i] = modules.optInt(i, 0) == 1
                     }
                 }
                 Triple(w, h, bools)
@@ -233,16 +232,28 @@ class ToolsActivity : AppCompatActivity() {
             Toast.makeText(this, "Enter regex pattern", Toast.LENGTH_SHORT).show()
             return
         }
+        val downloadDir = File("${StorageManager.PRIMARY_STORAGE_PATH}/Download")
+        val filePaths = downloadDir.listFiles()?.filter { it.isFile }?.map { it.absolutePath } ?: emptyList()
+        if (filePaths.isEmpty()) {
+            Toast.makeText(this, "No files found in Download folder to rename", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val pathsArray = JSONArray()
+        filePaths.forEach { pathsArray.put(it) }
+
         val req = JSONObject().apply {
-            put("directory", "${StorageManager.PRIMARY_STORAGE_PATH}/Download")
+            put("paths", pathsArray)
             put("pattern", pat)
             put("replacement", rep)
-            put("include_extension", false)
+            put("use_regex", true)
+            put("start_index", 1)
         }
         lifecycleScope.launch(Dispatchers.IO) {
             val json = RustCore.previewBatchRename(req.toString())
             val parsed = RustCore.parseEnvelope(json) { obj ->
-                val arr = obj.getJSONArray("operations")
+                val arr = if (obj.has("value")) obj.getJSONArray("value")
+                else if (obj.has("operations")) obj.getJSONArray("operations")
+                else JSONArray()
                 val sb = StringBuilder()
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
@@ -257,6 +268,8 @@ class ToolsActivity : AppCompatActivity() {
                         .setMessage(if (preview.isEmpty()) "No matching files found" else preview)
                         .setPositiveButton("OK", null)
                         .show()
+                }.onFailure {
+                    Toast.makeText(this@ToolsActivity, "Preview failed: ${it.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -267,22 +280,45 @@ class ToolsActivity : AppCompatActivity() {
         val rep = findViewById<EditText>(R.id.et_rename_replace).text.toString().trim()
         if (pat.isEmpty()) return
 
+        val downloadDir = File("${StorageManager.PRIMARY_STORAGE_PATH}/Download")
+        val filePaths = downloadDir.listFiles()?.filter { it.isFile }?.map { it.absolutePath } ?: emptyList()
+        if (filePaths.isEmpty()) return
+
+        val pathsArray = JSONArray()
+        filePaths.forEach { pathsArray.put(it) }
+
         val req = JSONObject().apply {
-            put("directory", "${StorageManager.PRIMARY_STORAGE_PATH}/Download")
+            put("paths", pathsArray)
             put("pattern", pat)
             put("replacement", rep)
-            put("include_extension", false)
+            put("use_regex", true)
+            put("start_index", 1)
         }
         lifecycleScope.launch(Dispatchers.IO) {
             val prevJson = RustCore.previewBatchRename(req.toString())
             val opsArr = try {
-                JSONObject(prevJson).optJSONObject("data")?.optJSONArray("operations") ?: JSONArray()
+                val root = JSONObject(prevJson)
+                if (root.optBoolean("ok", false)) {
+                    val d = root.opt("data")
+                    if (d is JSONArray) d else JSONArray()
+                } else JSONArray()
             } catch (_: Exception) {
                 JSONArray()
             }
-            RustCore.executeBatchRename(opsArr.toString())
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@ToolsActivity, "Renamed ${opsArr.length()} items", Toast.LENGTH_SHORT).show()
+            if (opsArr.length() > 0) {
+                val execJson = RustCore.executeBatchRename(opsArr.toString())
+                val parsed = RustCore.parseEnvelope(execJson) { true }
+                withContext(Dispatchers.Main) {
+                    parsed.onSuccess {
+                        Toast.makeText(this@ToolsActivity, "Renamed ${opsArr.length()} items", Toast.LENGTH_SHORT).show()
+                    }.onFailure {
+                        Toast.makeText(this@ToolsActivity, "Rename failed: ${it.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ToolsActivity, "No files matched pattern", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

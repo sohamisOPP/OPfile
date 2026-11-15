@@ -67,6 +67,13 @@ object RustCore {
                 val dataObj = root.optJSONObject("data")
                 if (dataObj != null) {
                     Result.success(dataParser(dataObj))
+                } else if (root.has("data") && !root.isNull("data")) {
+                    val synthetic = JSONObject().apply {
+                        val v = root.get("data")
+                        put("value", v)
+                        put("content", v)
+                    }
+                    Result.success(dataParser(synthetic))
                 } else {
                     Result.failure(Exception("Missing data object in successful response"))
                 }
@@ -135,5 +142,6 @@ data class TaskSnapshotInfo(
     val totalBytes: Long,
     val state: String,
     val currentFile: String,
-    val errorMessage: String?
+    val errorMessage: String?,
+    val resultJson: String? = null
 )

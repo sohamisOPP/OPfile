@@ -146,6 +146,12 @@ pub extern "system" fn Java_com_opfile_app_RustCore_renameEntry(
     })
 }
 
+#[derive(Serialize)]
+pub struct TextContentResponse {
+    pub content: String,
+    pub bytes_read: usize,
+}
+
 #[no_mangle]
 pub extern "system" fn Java_com_opfile_app_RustCore_readTextBounded(
     mut env: JNIEnv,
@@ -155,7 +161,9 @@ pub extern "system" fn Java_com_opfile_app_RustCore_readTextBounded(
 ) -> jstring {
     jni_guard(&mut env, |env| {
         let p = jstr_to_string(env, path)?;
-        read_text_bounded(&p, (max_bytes as usize).clamp(1024, 4 * 1024 * 1024))
+        let content = read_text_bounded(&p, (max_bytes as usize).clamp(1024, 4 * 1024 * 1024))?;
+        let bytes_read = content.len();
+        Ok(TextContentResponse { content, bytes_read })
     })
 }
 

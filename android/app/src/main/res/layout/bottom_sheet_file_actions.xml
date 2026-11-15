@@ -77,6 +77,23 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/action_open_external"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+        <TextView
+            android:id="@+id/tv_action_open_external"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open with... / Install"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/action_convert"
         android:layout_width="match_parent"
         android:layout_height="44dp"
