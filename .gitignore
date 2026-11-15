@@ -2,9 +2,11 @@ node_modules/
 .DS_Store
 *.log
 .temp/
-mobile/.dart_tool/
-mobile/build/
-mobile/.gradle/
-mobile/android/.gradle/
-mobile/android/local.properties
+rust-core/target/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+!android/app/debug.keystore
 

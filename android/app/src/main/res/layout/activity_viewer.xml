@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/amoled_black"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <!-- Top Toolbar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="@color/toolbar_surface"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:id="@+id/viewer_btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:padding="8dp"
+            android:src="@drawable/ic_arrow_drop"
+            android:rotation="90"
+            app:tint="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/viewer_tv_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="sample_document.pdf" />
+
+        <ImageView
+            android:id="@+id/viewer_btn_save"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Save text"
+            android:padding="9dp"
+            android:src="@drawable/ic_sort"
+            android:visibility="gone"
+            app:tint="@color/electric_violet" />
+
+        <ImageView
+            android:id="@+id/viewer_btn_mode"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Toggle Hex/Text"
+            android:padding="9dp"
+            android:src="@drawable/ic_more"
+            app:tint="@color/text_primary" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_line" />
+
+    <!-- Container for different viewer modes -->
+    <FrameLayout
+        android:id="@+id/viewer_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 1. Text & Code Viewer/Editor -->
+        <ScrollView
+            android:id="@+id/viewer_text_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/viewer_et_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:fontFamily="monospace"
+                android:gravity="top|start"
+                android:padding="16dp"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+        </ScrollView>
+
+        <!-- 2. Image Viewer -->
+        <ImageView
+            android:id="@+id/viewer_iv_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <!-- 3. Video / Media Player -->
+        <VideoView
+            android:id="@+id/viewer_video_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <!-- 4. PDF Viewer (RecyclerView for pages) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/viewer_rv_pdf"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <!-- 5. Memory-Mapped Hex Inspection Viewer -->
+        <ScrollView
+            android:id="@+id/viewer_hex_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/viewer_tv_hex"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:padding="12dp"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp" />
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>

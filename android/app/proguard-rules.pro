@@ -1,0 +1,2 @@
+-keep class com.opfile.app.** { *; }
+-dontwarn kotlin.**
