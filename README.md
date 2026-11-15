@@ -8,6 +8,7 @@
 
 Install OPfile directly on any Android device (Android 7.0+ / API 24–35+):
 - **Direct Repository Download:** [OPfile.apk](OPfile.apk) or [release/OPfile.apk](release/OPfile.apk)
+- **GitHub Releases:** [Download OPfile APK v1.0.0](https://github.com/sohamisOPP/OPfile/releases/tag/v1.0.0)
 
 ---
 
