@@ -17,7 +17,11 @@ object StorageManager {
     const val REQUEST_CODE_MANAGE_STORAGE = 1002
     const val REQUEST_CODE_SAF_TREE = 1003
 
-    const val PRIMARY_STORAGE_PATH = "/storage/emulated/0"
+    val PRIMARY_STORAGE_PATH: String
+        get() {
+            val ext = Environment.getExternalStorageDirectory()
+            return if (ext != null && ext.exists()) ext.absolutePath else "/storage/emulated/0"
+        }
 
     data class StorageVolumeInfo(
         val name: String,

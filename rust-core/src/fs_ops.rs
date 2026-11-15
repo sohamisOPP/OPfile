@@ -38,7 +38,9 @@ pub struct FileEntry {
 #[derive(Debug, Clone, Serialize)]
 pub struct DirectoryListing {
     pub path: String,
+    pub current_path: String,
     pub parent: Option<String>,
+    pub parent_path: Option<String>,
     pub entries: Vec<FileEntry>,
     pub skipped_restricted: usize,
 }
@@ -141,9 +143,13 @@ fn list_directory_blocking(
     let read_dir = match fs::read_dir(target) {
         Ok(rd) => rd,
         Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+            let p_str = target.to_string_lossy().into_owned();
+            let parent_opt = target.parent().map(|p| p.to_string_lossy().into_owned());
             return Ok(DirectoryListing {
-                path: target.to_string_lossy().into_owned(),
-                parent: target.parent().map(|p| p.to_string_lossy().into_owned()),
+                path: p_str.clone(),
+                current_path: p_str,
+                parent: parent_opt.clone(),
+                parent_path: parent_opt,
                 entries: Vec::new(),
                 skipped_restricted: 1,
             });
@@ -257,9 +263,13 @@ fn list_directory_blocking(
         }
     });
 
+    let p_str = target.to_string_lossy().into_owned();
+    let parent_opt = target.parent().map(|p| p.to_string_lossy().into_owned());
     Ok(DirectoryListing {
-        path: target.to_string_lossy().into_owned(),
-        parent: target.parent().map(|p| p.to_string_lossy().into_owned()),
+        path: p_str.clone(),
+        current_path: p_str,
+        parent: parent_opt.clone(),
+        parent_path: parent_opt,
         entries,
         skipped_restricted,
     })

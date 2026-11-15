@@ -102,6 +102,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (StorageManager.hasFullStoragePermission(this)) {
+            if (currentPath.isEmpty() || !File(currentPath).exists()) {
+                currentPath = StorageManager.PRIMARY_STORAGE_PATH
+            }
             refreshDirectory()
         }
         updateClipboardFab()
@@ -125,6 +128,7 @@ class MainActivity : AppCompatActivity() {
         if (!StorageManager.hasFullStoragePermission(this)) {
             StorageManager.requestFullStoragePermission(this)
         } else {
+            currentPath = StorageManager.PRIMARY_STORAGE_PATH
             refreshDirectory()
         }
     }
@@ -134,9 +138,26 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == StorageManager.REQUEST_CODE_MANAGE_STORAGE ||
             requestCode == StorageManager.REQUEST_CODE_LEGACY_STORAGE) {
             if (StorageManager.hasFullStoragePermission(this)) {
+                currentPath = StorageManager.PRIMARY_STORAGE_PATH
                 refreshDirectory()
             } else {
                 Toast.makeText(this, "Storage access is required to manage files", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == StorageManager.REQUEST_CODE_LEGACY_STORAGE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED }) {
+                currentPath = StorageManager.PRIMARY_STORAGE_PATH
+                refreshDirectory()
+            } else {
+                Toast.makeText(this, "Storage permission is required to view files", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -282,6 +303,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadPhysicalDirectory() {
+        if (!File(currentPath).exists()) {
+            currentPath = StorageManager.PRIMARY_STORAGE_PATH
+        }
         updateHeaderTitle()
         lifecycleScope.launch(Dispatchers.IO) {
             val json = RustCore.listDirectory(
@@ -292,15 +316,15 @@ class MainActivity : AppCompatActivity() {
                 query = searchQuery
             )
             val parsed = RustCore.parseEnvelope(json) { obj ->
-                val entriesArr = obj.getJSONArray("entries")
+                val entriesArr = obj.optJSONArray("entries") ?: JSONArray()
                 val list = mutableListOf<FileEntryItem>()
                 for (i in 0 until entriesArr.length()) {
-                    val e = entriesArr.getJSONObject(i)
+                    val e = entriesArr.optJSONObject(i) ?: continue
                     list.add(
                         FileEntryItem(
-                            name = e.getString("name"),
-                            path = e.getString("path"),
-                            isDir = e.getBoolean("is_dir"),
+                            name = e.optString("name", "Unknown"),
+                            path = e.optString("path", ""),
+                            isDir = e.optBoolean("is_dir", false),
                             isSymlink = e.optBoolean("is_symlink", false),
                             isHidden = e.optBoolean("is_hidden", false),
                             size = e.optLong("size", 0L),
@@ -311,12 +335,20 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+                val dirPath = obj.optString("path", obj.optString("current_path", currentPath))
+                val parentP = if (obj.has("parent") && !obj.isNull("parent")) {
+                    obj.optString("parent")
+                } else if (obj.has("parent_path") && !obj.isNull("parent_path")) {
+                    obj.optString("parent_path")
+                } else {
+                    null
+                }
                 DirectoryListingResult(
-                    currentPath = obj.getString("current_path"),
-                    parentPath = if (obj.has("parent_path") && !obj.isNull("parent_path")) obj.getString("parent_path") else null,
+                    currentPath = dirPath,
+                    parentPath = parentP,
                     entries = list,
-                    totalCount = obj.optInt("total_count", 0),
-                    totalSizeBytes = obj.optLong("total_size_bytes", 0L),
+                    totalCount = list.size,
+                    totalSizeBytes = list.sumOf { it.size },
                     canWrite = obj.optBoolean("can_write", true)
                 )
             }
@@ -344,15 +376,15 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val json = RustCore.listArchiveVirtual(virtualArchivePath, virtualInnerDir, virtualPassword)
             val parsed = RustCore.parseEnvelope(json) { obj ->
-                val entriesArr = obj.getJSONArray("entries")
+                val entriesArr = obj.optJSONArray("entries") ?: JSONArray()
                 val list = mutableListOf<VirtualEntryItem>()
                 for (i in 0 until entriesArr.length()) {
-                    val e = entriesArr.getJSONObject(i)
+                    val e = entriesArr.optJSONObject(i) ?: continue
                     list.add(
                         VirtualEntryItem(
-                            name = e.getString("name"),
-                            fullPath = e.getString("full_path"),
-                            isDir = e.getBoolean("is_dir"),
+                            name = e.optString("name", "Unknown"),
+                            fullPath = e.optString("full_path", ""),
+                            isDir = e.optBoolean("is_dir", false),
                             size = e.optLong("size", 0L),
                             compressedSize = e.optLong("compressed_size", 0L),
                             method = e.optString("method", ""),
@@ -362,10 +394,10 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
                 ArchiveVirtualResult(
-                    archivePath = obj.getString("archive_path"),
+                    archivePath = obj.optString("archive_path", virtualArchivePath),
                     innerDir = obj.optString("inner_dir", ""),
                     entries = list,
-                    totalEntries = obj.optInt("total_entries", 0)
+                    totalEntries = obj.optInt("total_entries", list.size)
                 )
             }
 
