@@ -602,6 +602,7 @@ class MainActivity : AppCompatActivity() {
         if (searchBarContainer.visibility == View.VISIBLE) {
             searchBarContainer.visibility = View.GONE
             searchQuery = ""
+            etSearchQuery.setText("")
             refreshDirectory()
             return
         }
@@ -757,6 +758,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleFabClick() {
         if (clipboardPaths.isNotEmpty()) {
+            if (isVirtualArchive) {
+                Toast.makeText(this, "Cannot paste files directly into an archive virtual view. Extract archive first.", Toast.LENGTH_SHORT).show()
+                return
+            }
             // Paste action
             val sources = JSONArray(clipboardPaths).toString()
             val moveMode = clipboardCutMode
@@ -782,6 +787,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCreateNewDialog() {
+        if (isVirtualArchive) {
+            Toast.makeText(this, "Cannot create items directly inside an archive virtual view", Toast.LENGTH_SHORT).show()
+            return
+        }
         val options = arrayOf("New Folder", "New Empty File", "Create Archive (.7z / .zip)")
         AlertDialog.Builder(this)
             .setTitle("Create")
@@ -1066,7 +1075,7 @@ class MainActivity : AppCompatActivity() {
 
         v.findViewById<View>(R.id.btn_compress_cancel).setOnClickListener { dialog.dismiss() }
         v.findViewById<View>(R.id.btn_compress_confirm).setOnClickListener {
-            val name = etName.text.toString().trim()
+            val name = etName.text.toString().trim().ifEmpty { "archive" }
             val fmt = spFormat.selectedItem.toString()
             val lvl = spLevel.selectedItem.toString()
             val pw = v.findViewById<EditText>(R.id.et_archive_password).text.toString()
@@ -1221,7 +1230,7 @@ class MainActivity : AppCompatActivity() {
         return try {
             val root = JSONObject(json)
             if (!root.optBoolean("ok", false)) return null
-            val d = root.getJSONObject("data")
+            val d = root.optJSONObject("data") ?: return null
             TaskSnapshotInfo(
                 taskId = d.optLong("task_id"),
                 title = d.optString("title"),
@@ -1232,7 +1241,7 @@ class MainActivity : AppCompatActivity() {
                 totalBytes = d.optLong("total_bytes"),
                 state = d.optString("state"),
                 currentFile = d.optString("current_file"),
-                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.getString("error_message") else null
+                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.optString("error_message") else null
             )
         } catch (e: Exception) {
             null

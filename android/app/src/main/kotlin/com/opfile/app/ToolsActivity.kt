@@ -157,7 +157,7 @@ class ToolsActivity : AppCompatActivity() {
                 while (!finished) {
                     kotlinx.coroutines.delay(300)
                     val snap = RustCore.getTaskSnapshot(taskId)
-                    val sObj = JSONObject(snap).optJSONObject("data")
+                    val sObj = try { JSONObject(snap).optJSONObject("data") } catch (_: Exception) { null }
                     val st = sObj?.optString("state")
                     if (st == "Completed") {
                         finished = true
@@ -275,8 +275,12 @@ class ToolsActivity : AppCompatActivity() {
         }
         lifecycleScope.launch(Dispatchers.IO) {
             val prevJson = RustCore.previewBatchRename(req.toString())
-            val opsArr = JSONObject(prevJson).optJSONObject("data")?.optJSONArray("operations") ?: JSONArray()
-            val execJson = RustCore.executeBatchRename(opsArr.toString())
+            val opsArr = try {
+                JSONObject(prevJson).optJSONObject("data")?.optJSONArray("operations") ?: JSONArray()
+            } catch (_: Exception) {
+                JSONArray()
+            }
+            RustCore.executeBatchRename(opsArr.toString())
             withContext(Dispatchers.Main) {
                 Toast.makeText(this@ToolsActivity, "Renamed ${opsArr.length()} items", Toast.LENGTH_SHORT).show()
             }

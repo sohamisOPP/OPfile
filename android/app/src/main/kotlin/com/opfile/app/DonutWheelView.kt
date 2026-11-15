@@ -25,6 +25,7 @@ class DonutWheelView @JvmOverloads constructor(
     private var targets: List<String> = emptyList()
     private var currentRotation: Float = 0f
     private var lastTickIndex: Int = -1
+    private var flingAnimator: ValueAnimator? = null
 
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
 
@@ -68,6 +69,7 @@ class DonutWheelView @JvmOverloads constructor(
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent): Boolean {
+            flingAnimator?.cancel()
             return true
         }
 
@@ -97,7 +99,8 @@ class DonutWheelView @JvmOverloads constructor(
         ): Boolean {
             val vel = (abs(velocityX) + abs(velocityY)) / 20f
             val dir = if (velocityX + velocityY > 0) 1f else -1f
-            val animator = ValueAnimator.ofFloat(currentRotation, currentRotation + dir * vel * 2f).apply {
+            flingAnimator?.cancel()
+            flingAnimator = ValueAnimator.ofFloat(currentRotation, currentRotation + dir * vel * 2f).apply {
                 duration = 650
                 interpolator = DecelerateInterpolator()
                 addUpdateListener {
@@ -106,7 +109,7 @@ class DonutWheelView @JvmOverloads constructor(
                     postInvalidateOnAnimation()
                 }
             }
-            animator.start()
+            flingAnimator?.start()
             return true
         }
 
@@ -143,10 +146,16 @@ class DonutWheelView @JvmOverloads constructor(
     })
 
     fun setTargetFormats(list: List<String>) {
+        flingAnimator?.cancel()
         targets = list
         currentRotation = 0f
         lastTickIndex = -1
         invalidate()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        flingAnimator?.cancel()
     }
 
     private fun checkHapticTick() {

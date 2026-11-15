@@ -218,6 +218,10 @@ class ViewerActivity : AppCompatActivity() {
                     val mc = MediaController(this@ViewerActivity)
                     mc.setAnchorView(videoView)
                     videoView.setMediaController(mc)
+                    videoView.setOnErrorListener { _, what, extra ->
+                        showError("Cannot decode video format: $fileName (Error $what, $extra)")
+                        true
+                    }
                     videoView.setVideoURI(Uri.fromFile(targetFile))
                     videoView.start()
                 } else {
@@ -240,6 +244,10 @@ class ViewerActivity : AppCompatActivity() {
                         pdfRenderer = PdfRenderer(pdfDescriptor!!)
                         rvPdf.adapter = PdfPageAdapter(pdfRenderer!!)
                     } catch (e: Exception) {
+                        try {
+                            pdfDescriptor?.close()
+                        } catch (_: Exception) {}
+                        pdfDescriptor = null
                         showError("PDF render error: ${e.message}")
                     }
                 } else {
@@ -369,8 +377,18 @@ class ViewerActivity : AppCompatActivity() {
         btnSave.visibility = View.GONE
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (videoView.isPlaying) {
+            videoView.pause()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        try {
+            videoView.stopPlayback()
+        } catch (_: Exception) {}
         try {
             pdfRenderer?.close()
             pdfDescriptor?.close()
@@ -397,11 +415,17 @@ class PdfPageAdapter(private val renderer: PdfRenderer) : RecyclerView.Adapter<P
     }
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
-        val page = renderer.openPage(position)
-        val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
-        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        page.close()
-        holder.ivPage.setImageBitmap(bitmap)
+        try {
+            val page = renderer.openPage(position)
+            val maxDim = maxOf(page.width, page.height)
+            val scale = if (maxDim > 2048) 2048f / maxDim else 1.0f
+            val renderW = (page.width * scale).toInt().coerceAtLeast(1)
+            val renderH = (page.height * scale).toInt().coerceAtLeast(1)
+            val bitmap = Bitmap.createBitmap(renderW, renderH, Bitmap.Config.ARGB_8888)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            page.close()
+            holder.ivPage.setImageBitmap(bitmap)
+        } catch (_: Throwable) {}
     }
 
     override fun getItemCount(): Int = renderer.pageCount

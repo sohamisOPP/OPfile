@@ -125,7 +125,7 @@ class TaskForegroundService : Service() {
         return try {
             val root = JSONObject(json)
             if (!root.optBoolean("ok", false)) return null
-            val d = root.getJSONObject("data")
+            val d = root.optJSONObject("data") ?: return null
             TaskSnapshotInfo(
                 taskId = d.optLong("task_id"),
                 title = d.optString("title"),
@@ -136,7 +136,7 @@ class TaskForegroundService : Service() {
                 totalBytes = d.optLong("total_bytes"),
                 state = d.optString("state"),
                 currentFile = d.optString("current_file"),
-                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.getString("error_message") else null
+                errorMessage = if (d.has("error_message") && !d.isNull("error_message")) d.optString("error_message") else null
             )
         } catch (e: Exception) {
             null
