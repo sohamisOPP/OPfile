@@ -89,7 +89,7 @@
                         app:tint="@color/text_muted" />
                 </LinearLayout>
 
-                <!-- Multi-select, Search, Sort & Tools Actions -->
+                <!-- Overflow 3-dots Menu & Actions -->
                 <ImageView
                     android:id="@+id/btn_multi_select"
                     android:layout_width="40dp"
@@ -98,6 +98,7 @@
                     android:contentDescription="Multi-Select"
                     android:padding="9dp"
                     android:src="@drawable/ic_checklist"
+                    android:visibility="gone"
                     app:tint="@color/text_primary" />
 
                 <ImageView
@@ -108,6 +109,7 @@
                     android:contentDescription="Search"
                     android:padding="9dp"
                     android:src="@drawable/ic_search"
+                    android:visibility="gone"
                     app:tint="@color/text_primary" />
 
                 <ImageView
@@ -118,14 +120,15 @@
                     android:contentDescription="Sort"
                     android:padding="9dp"
                     android:src="@drawable/ic_sort"
+                    android:visibility="gone"
                     app:tint="@color/text_primary" />
 
                 <ImageView
-                    android:id="@+id/btn_tools"
+                    android:id="@+id/btn_overflow_menu"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Tools"
+                    android:contentDescription="More Options"
                     android:padding="9dp"
                     android:src="@drawable/ic_more"
                     app:tint="@color/text_primary" />
@@ -169,7 +172,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Close search"
                     android:padding="6dp"
-                    android:src="@drawable/ic_arrow_drop"
+                    android:src="@drawable/ic_close"
                     app:tint="@color/text_secondary" />
             </LinearLayout>
 

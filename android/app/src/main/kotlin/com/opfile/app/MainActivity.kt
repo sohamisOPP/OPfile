@@ -4,10 +4,16 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.StatFs
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +23,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -252,8 +259,8 @@ class MainActivity : AppCompatActivity() {
             showSortDialog()
         }
 
-        findViewById<View>(R.id.btn_tools).setOnClickListener {
-            startActivity(Intent(this, ToolsActivity::class.java))
+        findViewById<View?>(R.id.btn_overflow_menu)?.setOnClickListener { v ->
+            showTopOverflowMenu(v)
         }
 
         findViewById<View>(R.id.btn_drawer_tools).setOnClickListener {
@@ -395,15 +402,136 @@ class MainActivity : AppCompatActivity() {
         rvFileList.adapter = adapter
     }
 
+    private fun showTopOverflowMenu(anchor: View) {
+        val popup = PopupMenu(this, anchor, Gravity.END)
+        popup.menu.add(0, 1, 0, "Search").setIcon(R.drawable.ic_search)
+        popup.menu.add(0, 2, 1, "Sort by...").setIcon(R.drawable.ic_sort)
+        popup.menu.add(0, 3, 2, if (isSelectionMode) "Exit Multi-select" else "Multi-select").setIcon(R.drawable.ic_checklist)
+        popup.menu.add(0, 4, 3, "New Folder").setIcon(R.drawable.ic_folder)
+        popup.menu.add(0, 5, 4, "Refresh").setIcon(R.drawable.ic_refresh)
+        popup.menu.add(0, 6, 5, "Utilities").setIcon(R.drawable.ic_build)
+
+        popup.setForceShowIcon(true)
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                1 -> {
+                    if (searchBarContainer.visibility != View.VISIBLE) {
+                        toggleSearchBar()
+                    } else {
+                        etSearchQuery.requestFocus()
+                    }
+                    true
+                }
+                2 -> {
+                    showSortDialog()
+                    true
+                }
+                3 -> {
+                    if (isSelectionMode) {
+                        exitSelectionMode()
+                    } else {
+                        isSelectionMode = true
+                        showSelectionActionBar()
+                        tvSelectionCount.text = "${selectedItems.size} selected"
+                        adapter.notifyDataSetChanged()
+                    }
+                    true
+                }
+                4 -> {
+                    showCreateNewDialog()
+                    true
+                }
+                5 -> {
+                    refreshDirectory()
+                    true
+                }
+                6 -> {
+                    startActivity(Intent(this, ToolsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
+    private fun getStorageSpaceString(dirPath: String): String {
+        return try {
+            val stat = StatFs(dirPath)
+            val blockSize = stat.blockSizeLong
+            val avail = stat.availableBlocksLong * blockSize
+            val total = stat.blockCountLong * blockSize
+            "${formatSize(avail)} free / ${formatSize(total)}"
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    private fun calculateFolderStats(dir: File, maxDepth: Int = 3): Pair<Long, Int> {
+        var totalBytes = 0L
+        var count = 0
+        fun walk(d: File, depth: Int) {
+            if (depth > maxDepth) return
+            val list = d.listFiles() ?: return
+            for (f in list) {
+                if (f.isFile) {
+                    totalBytes += f.length()
+                    count++
+                } else if (f.isDirectory && !f.name.startsWith(".")) {
+                    walk(f, depth + 1)
+                }
+            }
+        }
+        walk(dir, 0)
+        return totalBytes to count
+    }
+
     private fun setupDrawer() {
         val rvDrawer = findViewById<RecyclerView>(R.id.rv_drawer_items)
         rvDrawer.layoutManager = LinearLayoutManager(this)
 
-        val items = mutableListOf<Pair<String, String>>()
-        items.addAll(StorageManager.getQuickJumpShortcuts())
+        val items = mutableListOf<DrawerEntry>()
+        for (shortcut in StorageManager.getQuickJumpShortcuts()) {
+            val isPrimary = shortcut.second == StorageManager.PRIMARY_STORAGE_PATH
+            val iconRes = when (shortcut.first) {
+                "Internal Storage" -> R.drawable.ic_storage
+                "Download" -> R.drawable.ic_download
+                "DCIM", "Pictures" -> R.drawable.ic_image
+                "Music" -> R.drawable.ic_audio
+                "Documents" -> R.drawable.ic_doc
+                else -> R.drawable.ic_folder
+            }
+            val initialSubtitle = if (isPrimary) {
+                getStorageSpaceString(shortcut.second)
+            } else {
+                try {
+                    val cnt = File(shortcut.second).list()?.size
+                    if (cnt != null) "$cnt items" else ""
+                } catch (_: Exception) { "" }
+            }
+            items.add(
+                DrawerEntry(
+                    name = shortcut.first,
+                    path = shortcut.second,
+                    iconRes = iconRes,
+                    subtitle = initialSubtitle,
+                    isStorageVolume = isPrimary
+                )
+            )
+        }
+
         for (v in StorageManager.getAvailableStorageVolumes(this)) {
-            if (!v.isPrimary && !items.any { it.second == v.path }) {
-                items.add(v.name to v.path)
+            if (!v.isPrimary && !items.any { it.path == v.path }) {
+                items.add(
+                    DrawerEntry(
+                        name = v.name,
+                        path = v.path,
+                        iconRes = R.drawable.ic_storage,
+                        subtitle = getStorageSpaceString(v.path),
+                        isStorageVolume = true
+                    )
+                )
             }
         }
 
@@ -413,6 +541,34 @@ class MainActivity : AppCompatActivity() {
             navigateToDirectory(path)
         }
         rvDrawer.adapter = drawerAdapter
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            for (i in items.indices) {
+                val entry = items[i]
+                if (entry.isStorageVolume) continue
+                val f = File(entry.path)
+                if (f.exists() && f.isDirectory) {
+                    val (bytes, count) = calculateFolderStats(f, maxDepth = 3)
+                    val sub = if (count > 0) "${formatSize(bytes)} • $count items" else "Empty"
+                    withContext(Dispatchers.Main) {
+                        entry.subtitle = sub
+                        drawerAdapter.notifyItemChanged(i)
+                    }
+                }
+            }
+        }
+
+        drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
+            override fun onDrawerOpened(drawerView: View) {
+                for (i in items.indices) {
+                    val entry = items[i]
+                    if (entry.isStorageVolume) {
+                        entry.subtitle = getStorageSpaceString(entry.path)
+                        drawerAdapter.notifyItemChanged(i)
+                    }
+                }
+            }
+        })
     }
 
     private fun updateHeaderTitle() {
@@ -451,18 +607,28 @@ class MainActivity : AppCompatActivity() {
                 val list = mutableListOf<FileEntryItem>()
                 for (i in 0 until entriesArr.length()) {
                     val e = entriesArr.optJSONObject(i) ?: continue
+                    val isDir = e.optBoolean("is_dir", false)
+                    val p = e.optString("path", "")
+                    val childCount = if (isDir) {
+                        try {
+                            File(p).list()?.size
+                        } catch (_: Exception) {
+                            null
+                        }
+                    } else null
                     list.add(
                         FileEntryItem(
                             name = e.optString("name", "Unknown"),
-                            path = e.optString("path", ""),
-                            isDir = e.optBoolean("is_dir", false),
+                            path = p,
+                            isDir = isDir,
                             isSymlink = e.optBoolean("is_symlink", false),
                             isHidden = e.optBoolean("is_hidden", false),
                             size = e.optLong("size", 0L),
                             modifiedMs = e.optLong("modified_ms", 0L),
-                            permissions = e.optString("permissions", ""),
+                            permissions = "",
                             extension = e.optString("extension", ""),
-                            category = e.optString("category", "file")
+                            category = e.optString("category", "file"),
+                            childCount = childCount
                         )
                     )
                 }
@@ -935,6 +1101,9 @@ class MainActivity : AppCompatActivity() {
         if (isArchive && !isVirtualArchive) {
             // Virtual folder browsing
             openVirtualArchive(item.path, "")
+        } else if (item.category == "image" || item.category == "video" || item.category == "audio" || item.category == "document" || item.category == "code") {
+            // Tap directly opens in Viewer preview
+            openInViewer(item)
         } else {
             showFileActionSheet(item)
         }
@@ -947,7 +1116,7 @@ class MainActivity : AppCompatActivity() {
         sheet.setContentView(v)
 
         v.findViewById<TextView>(R.id.sheet_file_name).text = item.name
-        v.findViewById<TextView>(R.id.sheet_file_meta).text = "${item.meta} | ${item.permissions}"
+        v.findViewById<TextView>(R.id.sheet_file_meta).text = item.meta
 
         val isArchive = item.name.lowercase().let {
             it.endsWith(".zip") || it.endsWith(".7z") || it.endsWith(".tar") || it.endsWith(".tar.gz") ||
@@ -1114,8 +1283,8 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
 
-        v.findViewById<TextView>(R.id.tv_donut_title)?.text = profile.name
-        v.findViewById<TextView>(R.id.tv_donut_subtitle)?.text = "${File(filePath).name} • ${profile.countText} options"
+        v.findViewById<TextView>(R.id.tv_donut_title)?.text = "Convert / Compress"
+        v.findViewById<TextView>(R.id.tv_donut_subtitle)?.text = "${File(filePath).name} • Rotate wheel to select target format"
 
         val wheel = v.findViewById<DonutWheelView>(R.id.donut_wheel_view)
         wheel.setWheelProfile(profile)
@@ -1570,7 +1739,16 @@ data class RowItem(
             val dateStr = if (e.modifiedMs > 0) {
                 SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(e.modifiedMs))
             } else ""
-            val sizeStr = if (e.isDir) "Folder" else formatSize(e.size)
+            val sizeStr = if (e.isDir) {
+                when (val cnt = e.childCount) {
+                    null -> "Folder"
+                    0 -> "Empty"
+                    1 -> "1 item"
+                    else -> "$cnt items"
+                }
+            } else {
+                formatSize(e.size)
+            }
             val metaStr = if (dateStr.isNotEmpty()) "$sizeStr | $dateStr" else sizeStr
             return RowItem(
                 name = e.name,
@@ -1579,7 +1757,7 @@ data class RowItem(
                 isDir = e.isDir,
                 size = e.size,
                 modifiedMs = e.modifiedMs,
-                permissions = e.permissions,
+                permissions = "",
                 extension = e.extension,
                 category = e.category,
                 meta = metaStr
@@ -1606,11 +1784,23 @@ data class RowItem(
             )
         }
 
-        private fun formatSize(bytes: Long): String {
-            if (bytes <= 0) return "0 B"
-            val units = arrayOf("B", "KB", "MB", "GB", "TB")
-            val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt().coerceIn(0, 4)
-            return String.format(Locale.US, "%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
+        fun formatSize(bytes: Long): String = com.opfile.app.formatSize(bytes)
+    }
+}
+
+fun formatSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt().coerceIn(0, 4)
+    return String.format(Locale.US, "%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
+}
+
+object ThumbnailCache {
+    private val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
+    private val cacheSize = maxMemory / 8
+    val lru = object : androidx.collection.LruCache<String, Bitmap>(cacheSize) {
+        override fun sizeOf(key: String, bitmap: Bitmap): Int {
+            return bitmap.byteCount / 1024
         }
     }
 }
@@ -1651,30 +1841,96 @@ class FileListAdapter(
         holder.selectionIndicator.visibility = if (selected) View.VISIBLE else View.GONE
 
         holder.fileName.text = item.name
-        holder.fileMeta.text = if (item.permissions.isNotEmpty()) "${item.meta} | ${item.permissions}" else item.meta
+        holder.fileMeta.text = item.meta
+        holder.fileIcon.tag = item.path
 
         if (item.isParentRow) {
+            holder.fileIcon.scaleType = ImageView.ScaleType.FIT_CENTER
             holder.fileIcon.setImageResource(R.drawable.ic_parent_dir)
             holder.fileIcon.setColorFilter(Color.parseColor("#F39C12"))
             holder.btnRowMore.visibility = View.GONE
         } else if (item.isDir) {
+            holder.fileIcon.scaleType = ImageView.ScaleType.FIT_CENTER
             holder.fileIcon.setImageResource(R.drawable.ic_folder)
             holder.fileIcon.setColorFilter(Color.parseColor("#F39C12"))
             holder.btnRowMore.visibility = View.VISIBLE
         } else {
-            holder.fileIcon.setImageResource(R.drawable.ic_file)
-            val color = when (item.category) {
-                "archive" -> Color.parseColor("#E0E0E0")
-                "apk" -> Color.parseColor("#00B894")
-                "image" -> Color.parseColor("#00CEC9")
-                "audio" -> Color.parseColor("#E84393")
-                "video" -> Color.parseColor("#E17055")
-                "document" -> Color.parseColor("#0984E3")
-                "code" -> Color.parseColor("#B0BEC5")
-                "specialized" -> Color.parseColor("#FDCB6E")
-                else -> Color.parseColor("#7F8C8D")
+            val isMedia = (item.category == "image" || item.category == "video") && item.virtualFullPath == null
+            val cachedBmp = if (isMedia) ThumbnailCache.lru.get(item.path) else null
+
+            if (cachedBmp != null) {
+                holder.fileIcon.clearColorFilter()
+                holder.fileIcon.scaleType = ImageView.ScaleType.CENTER_CROP
+                holder.fileIcon.setImageBitmap(cachedBmp)
+            } else {
+                holder.fileIcon.scaleType = ImageView.ScaleType.FIT_CENTER
+                holder.fileIcon.setImageResource(R.drawable.ic_file)
+                val color = when (item.category) {
+                    "archive" -> Color.parseColor("#E0E0E0")
+                    "apk" -> Color.parseColor("#00B894")
+                    "image" -> Color.parseColor("#00CEC9")
+                    "audio" -> Color.parseColor("#E84393")
+                    "video" -> Color.parseColor("#E17055")
+                    "document" -> Color.parseColor("#0984E3")
+                    "code" -> Color.parseColor("#B0BEC5")
+                    "specialized" -> Color.parseColor("#FDCB6E")
+                    else -> Color.parseColor("#7F8C8D")
+                }
+                holder.fileIcon.setColorFilter(color)
+
+                if (isMedia) {
+                    val filePath = item.path
+                    val category = item.category
+                    (holder.itemView.context as? AppCompatActivity)?.lifecycleScope?.launch(Dispatchers.IO) {
+                        val bmp: Bitmap? = if (category == "image") {
+                            try {
+                                val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                BitmapFactory.decodeFile(filePath, opts)
+                                val sample = maxOf(1, minOf(opts.outWidth / 96, opts.outHeight / 96))
+                                val decOpts = BitmapFactory.Options().apply {
+                                    inSampleSize = sample
+                                    inPreferredConfig = Bitmap.Config.RGB_565
+                                }
+                                val raw = BitmapFactory.decodeFile(filePath, decOpts)
+                                if (raw != null) {
+                                    val exif = try { android.media.ExifInterface(filePath) } catch (_: Exception) { null }
+                                    val orient = exif?.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
+                                    val rot = when (orient) {
+                                        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                                        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                                        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                                        else -> 0f
+                                    }
+                                    if (rot != 0f) {
+                                        val m = Matrix().apply { postRotate(rot) }
+                                        Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+                                    } else raw
+                                } else null
+                            } catch (_: Exception) { null }
+                        } else {
+                            try {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    android.media.ThumbnailUtils.createVideoThumbnail(File(filePath), android.util.Size(96, 96), null)
+                                } else {
+                                    @Suppress("DEPRECATION")
+                                    android.media.ThumbnailUtils.createVideoThumbnail(filePath, android.provider.MediaStore.Images.Thumbnails.MICRO_KIND)
+                                }
+                            } catch (_: Exception) { null }
+                        }
+
+                        if (bmp != null) {
+                            ThumbnailCache.lru.put(filePath, bmp)
+                            withContext(Dispatchers.Main) {
+                                if (holder.fileIcon.tag == filePath) {
+                                    holder.fileIcon.clearColorFilter()
+                                    holder.fileIcon.scaleType = ImageView.ScaleType.CENTER_CROP
+                                    holder.fileIcon.setImageBitmap(bmp)
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            holder.fileIcon.setColorFilter(color)
             holder.btnRowMore.visibility = View.VISIBLE
         }
 
@@ -1699,14 +1955,23 @@ class FileListAdapter(
     override fun getItemCount(): Int = items.size
 }
 
+data class DrawerEntry(
+    val name: String,
+    val path: String,
+    val iconRes: Int,
+    var subtitle: String = "",
+    val isStorageVolume: Boolean = false
+)
+
 class DrawerAdapter(
-    private val items: List<Pair<String, String>>,
+    private val items: List<DrawerEntry>,
     private val onItemClick: (String) -> Unit
 ) : RecyclerView.Adapter<DrawerAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.iv_drawer_icon)
         val title: TextView = view.findViewById(R.id.tv_drawer_title)
+        val subtitle: TextView = view.findViewById(R.id.tv_drawer_subtitle)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -1715,9 +1980,16 @@ class DrawerAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val (name, path) = items[position]
-        holder.title.text = name
-        holder.itemView.setOnClickListener { onItemClick(path) }
+        val entry = items[position]
+        holder.title.text = entry.name
+        holder.icon.setImageResource(entry.iconRes)
+        if (entry.subtitle.isNotEmpty()) {
+            holder.subtitle.visibility = View.VISIBLE
+            holder.subtitle.text = entry.subtitle
+        } else {
+            holder.subtitle.visibility = View.GONE
+        }
+        holder.itemView.setOnClickListener { onItemClick(entry.path) }
     }
 
     override fun getItemCount(): Int = items.size

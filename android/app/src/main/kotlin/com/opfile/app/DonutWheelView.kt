@@ -330,9 +330,22 @@ class DonutWheelView @JvmOverloads constructor(
         }
         canvas.drawCircle(cx, cy, innerR - 4f, centerBorder)
 
-        // Center text: Category Title on top, Count text below (matches screenshots 100%)
-        centerTextPaint.textSize = if (categoryTitle.length > 12) 30f else 36f
-        canvas.drawText(categoryTitle, cx, cy - 8f, centerTextPaint)
-        canvas.drawText(categoryCountText, cx, cy + 26f, centerSubPaint)
+        // Center text: Format label on top, action subtitle below (as it was originally)
+        val selSlice = getSelectedSlice() ?: (if (slices.isNotEmpty()) slices[0] else null)
+        val selLabel = selSlice?.label ?: ""
+        val selFmt = selSlice?.targetFormat ?: ""
+        val isCompress = selFmt.lowercase() in listOf("zip", "7z", "tar.gz", "tar.xz", "tar.bz2", "gz", "xz")
+        val isExtract = selFmt.lowercase() == "extract" || selSlice?.actionType == "extract"
+
+        centerTextPaint.textSize = if (selLabel.length > 8) 28f else 38f
+        canvas.drawText(selLabel.uppercase(), cx, cy - 6f, centerTextPaint)
+
+        val subText = when {
+            isExtract -> "TAP TO EXTRACT"
+            isCompress -> "TAP TO COMPRESS"
+            selSlice?.isAction == true -> "TAP TO EXECUTE"
+            else -> "TAP TO CONVERT"
+        }
+        canvas.drawText(subText, cx, cy + 30f, centerSubPaint)
     }
 }
