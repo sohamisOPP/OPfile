@@ -58,7 +58,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-medium"
                         android:text="OPfile"
-                        android:textColor="@color/electric_violet"
+                        android:textColor="@color/text_primary"
                         android:textSize="17sp"
                         android:textStyle="bold" />
 
@@ -192,7 +192,8 @@
                     android:background="?attr/selectableItemBackground"
                     android:padding="8dp"
                     android:text="Select All"
-                    android:textColor="@color/electric_violet"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold"
                     android:textSize="13sp" />
 
                 <TextView
@@ -232,9 +233,9 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="Actions"
                 android:src="@drawable/ic_add"
-                app:backgroundTint="@color/electric_violet"
+                app:backgroundTint="@color/monochrome_white"
                 app:elevation="6dp"
-                app:tint="@color/text_primary" />
+                app:tint="@color/amoled_black" />
 
             <!-- Live Item Count Badge on Paste Button -->
             <TextView
@@ -244,7 +245,7 @@
                 android:layout_gravity="top|end"
                 android:background="@drawable/bg_badge_violet"
                 android:gravity="center"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/amoled_black"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:visibility="gone"
@@ -265,27 +266,20 @@
         <!-- Drawer Header -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="90dp"
+            android:layout_height="72dp"
             android:background="@color/amoled_black"
-            android:gravity="bottom"
+            android:gravity="center_vertical"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="OPfile"
-                android:textColor="@color/electric_violet"
+                android:textColor="@color/text_primary"
                 android:textSize="20sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Offline File &amp; Archive Manager"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
         </LinearLayout>
 
         <View
@@ -321,7 +315,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_more"
-                app:tint="@color/electric_violet" />
+                app:tint="@color/text_primary" />
 
             <TextView
                 android:layout_width="wrap_content"

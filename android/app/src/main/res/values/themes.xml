@@ -3,8 +3,8 @@
     <style name="Theme.OPfile" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:windowBackground">@color/amoled_black</item>
         <item name="android:colorBackground">@color/amoled_black</item>
-        <item name="colorPrimary">@color/electric_violet</item>
-        <item name="colorOnPrimary">@color/text_primary</item>
+        <item name="colorPrimary">@color/monochrome_white</item>
+        <item name="colorOnPrimary">@color/amoled_black</item>
         <item name="colorSurface">@color/toolbar_surface</item>
         <item name="colorOnSurface">@color/text_primary</item>
         <item name="android:statusBarColor">@color/toolbar_surface</item>
@@ -36,7 +36,8 @@
     <style name="Theme.OPfile.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="android:windowBackground">@drawable/bg_glass_dialog</item>
         <item name="colorSurface">@color/glass_surface</item>
-        <item name="colorPrimary">@color/electric_violet</item>
+        <item name="colorPrimary">@color/monochrome_white</item>
+        <item name="colorOnPrimary">@color/amoled_black</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
     </style>

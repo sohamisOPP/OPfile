@@ -51,7 +51,7 @@
             android:padding="9dp"
             android:src="@drawable/ic_sort"
             android:visibility="gone"
-            app:tint="@color/electric_violet" />
+            app:tint="@color/text_primary" />
 
         <ImageView
             android:id="@+id/viewer_btn_mode"

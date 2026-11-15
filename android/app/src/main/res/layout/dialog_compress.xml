@@ -122,8 +122,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:backgroundTint="@color/electric_violet"
+            android:backgroundTint="@color/monochrome_white"
             android:text="Compress"
-            android:textColor="@color/text_primary" />
+            android:textColor="@color/amoled_black" />
     </LinearLayout>
 </LinearLayout>

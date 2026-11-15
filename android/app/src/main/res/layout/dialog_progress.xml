@@ -35,7 +35,7 @@
         android:layout_marginTop="12dp"
         android:max="100"
         android:progress="0"
-        android:progressTint="@color/electric_violet" />
+        android:progressTint="@color/monochrome_white" />
 
     <TextView
         android:id="@+id/tv_dialog_task_stats"
@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Hide"
-            android:textColor="@color/electric_violet" />
+            android:textColor="@color/text_primary" />
 
         <Button
             android:id="@+id/btn_dialog_task_pause"

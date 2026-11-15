@@ -15,7 +15,7 @@
         android:layout_width="22dp"
         android:layout_height="22dp"
         android:src="@drawable/ic_folder"
-        app:tint="@color/electric_violet"
+        app:tint="@color/text_primary"
         android:contentDescription="Shortcut icon" />
 
     <TextView

@@ -46,7 +46,7 @@ class DonutWheelView @JvmOverloads constructor(
     }
 
     private val centerTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#6C5CE7")
+        color = Color.WHITE
         textSize = 42f
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
         textAlign = Paint.Align.CENTER
@@ -59,7 +59,7 @@ class DonutWheelView @JvmOverloads constructor(
     }
 
     private val pointerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#6C5CE7")
+        color = Color.WHITE
         style = Paint.Style.FILL
     }
 
@@ -225,7 +225,7 @@ class DonutWheelView @JvmOverloads constructor(
         val centerBorder = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = 3f
-            color = Color.parseColor("#6C5CE7")
+            color = Color.WHITE
         }
         canvas.drawCircle(cx, cy, innerR - 4f, centerBorder)
 

@@ -60,7 +60,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Local Wi-Fi File Sharing Server"
-                android:textColor="@color/electric_violet"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -107,9 +107,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:backgroundTint="@color/electric_violet"
+                    android:backgroundTint="@color/monochrome_white"
                     android:text="Start Wi-Fi Transfer Server"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="@color/amoled_black" />
             </LinearLayout>
 
             <!-- Tool 2: Cushion Treemap Disk Analyzer -->
@@ -118,7 +118,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Cushion Treemap Disk Analyzer"
-                android:textColor="@color/electric_violet"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -155,7 +155,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="APK &amp; Split-XAPK Manifest Inspector"
-                android:textColor="@color/electric_violet"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -192,7 +192,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Regex Batch Renaming"
-                android:textColor="@color/electric_violet"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -260,9 +260,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:backgroundTint="@color/electric_violet"
+                        android:backgroundTint="@color/monochrome_white"
                         android:text="Execute"
-                        android:textColor="@color/text_primary" />
+                        android:textColor="@color/amoled_black" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

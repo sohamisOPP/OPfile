@@ -189,7 +189,7 @@ class TaskForegroundService : Service() {
             .setProgress(100, progress, progress == 0)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setColor(0xFF6C5CE7.toInt())
+            .setColor(0xFFFFFFFF.toInt())
             .addAction(pauseResumeAction)
             .addAction(NotificationCompat.Action.Builder(0, "Cancel", cancelIntent).build())
             .build()

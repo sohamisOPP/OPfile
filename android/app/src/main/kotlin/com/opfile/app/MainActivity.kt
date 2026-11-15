@@ -532,6 +532,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateClipboardFab() {
+        fabMain.imageTintList = android.content.res.ColorStateList.valueOf(Color.BLACK)
         if (clipboardPaths.isNotEmpty()) {
             fabMain.setImageResource(R.drawable.ic_paste)
             tvFabBadge.visibility = View.VISIBLE
@@ -1186,13 +1187,13 @@ class FileListAdapter(
         } else {
             holder.fileIcon.setImageResource(R.drawable.ic_file)
             val color = when (item.category) {
-                "archive" -> Color.parseColor("#6C5CE7")
+                "archive" -> Color.parseColor("#E0E0E0")
                 "apk" -> Color.parseColor("#00B894")
                 "image" -> Color.parseColor("#00CEC9")
                 "audio" -> Color.parseColor("#E84393")
                 "video" -> Color.parseColor("#E17055")
                 "document" -> Color.parseColor("#0984E3")
-                "code" -> Color.parseColor("#A29BFE")
+                "code" -> Color.parseColor("#B0BEC5")
                 "specialized" -> Color.parseColor("#FDCB6E")
                 else -> Color.parseColor("#7F8C8D")
             }
