@@ -12,6 +12,10 @@ scripts/** linguist-detectable=false
 android/app/src/main/res/** linguist-detectable=false
 android/gradle/** linguist-detectable=false
 
+# Documentation
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
+
 # Prioritize Rust core
 *.rs linguist-detectable=true
 *.rs linguist-language=Rust

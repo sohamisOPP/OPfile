@@ -51,6 +51,13 @@ OPfile includes a standalone command-line companion (`./bin/opfile` or `node cli
 
 ---
 
+## Documentation
+
+- [Architecture & Feature Walkthrough](docs/walkthrough.md): Comprehensive breakdown of the pure native Android architecture, Rust NDK core, 17 Donut Wheel profiles, Cushion Treemap analyzer, and release verification.
+- [Implementation Plan](docs/implementation_plan.md): The technical plan and milestone roadmap.
+
+---
+
 ## License
 
 MIT License. Open source and free for everyone.
