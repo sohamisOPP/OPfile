@@ -91,19 +91,52 @@ class MainActivity : AppCompatActivity() {
         setupDrawer()
         setupRecyclerView()
 
-        // Handle intent if launched from VIEW archive action
-        intent?.data?.path?.let { p ->
-            val f = File(p)
-            if (f.exists()) {
-                val name = f.name.lowercase()
-                if (name.endsWith(".zip") || name.endsWith(".7z") || name.endsWith(".tar") || name.endsWith(".rar")) {
-                    openVirtualArchive(f.absolutePath, "")
-                    return
+        // Handle intent if launched from external VIEW archive action
+        handleIncomingArchiveIntent(intent)
+
+        checkAndRequestStorage()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingArchiveIntent(intent)
+    }
+
+    private fun handleIncomingArchiveIntent(targetIntent: Intent?) {
+        val uri = targetIntent?.data ?: return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val resolvedPath: String? = when (uri.scheme) {
+                "file" -> uri.path?.let { p -> if (File(p).exists()) p else null }
+                "content" -> {
+                    try {
+                        val displayName = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                            val nameIdx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                            if (nameIdx != -1 && cursor.moveToFirst()) cursor.getString(nameIdx) else null
+                        } ?: "incoming_archive.zip"
+                        val tempFile = File(cacheDir, "incoming_$displayName")
+                        contentResolver.openInputStream(uri)?.use { input ->
+                            tempFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        if (tempFile.exists() && tempFile.length() > 0) tempFile.absolutePath else null
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                else -> uri.path?.let { p -> if (File(p).exists()) p else null }
+            }
+
+            if (resolvedPath != null) {
+                withContext(Dispatchers.Main) {
+                    val name = File(resolvedPath).name.lowercase()
+                    if (name.endsWith(".zip") || name.endsWith(".7z") || name.endsWith(".tar") || name.endsWith(".tar.gz") || name.endsWith(".rar") || name.endsWith(".apk")) {
+                        openVirtualArchive(resolvedPath, "")
+                    }
                 }
             }
         }
-
-        checkAndRequestStorage()
     }
 
     override fun onResume() {
@@ -1059,7 +1092,14 @@ class MainActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            startActivity(if (isApk) intent else Intent.createChooser(intent, "Open with..."))
+            if (isApk) {
+                startActivity(intent)
+            } else {
+                val chooser = Intent.createChooser(intent, "Open with...").apply {
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(chooser)
+            }
         } catch (e: Exception) {
             Toast.makeText(this, "Cannot open: ${e.message}", Toast.LENGTH_SHORT).show()
         }

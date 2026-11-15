@@ -61,7 +61,12 @@ class TaskForegroundService : Service() {
                 val title = intent.getStringExtra(EXTRA_TASK_TITLE) ?: "OPfile Operation"
                 scanPathAfterComplete = intent.getStringExtra(EXTRA_SCAN_PATH)
                 activeTaskId = taskId
-                startForeground(NOTIFICATION_ID, buildNotification(title, 0, "Starting...", false))
+                val notif = buildNotification(title, 0, "Starting...", false)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    startForeground(NOTIFICATION_ID, notif, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+                } else {
+                    startForeground(NOTIFICATION_ID, notif)
+                }
                 startPolling(taskId, title)
             }
             ACTION_PAUSE -> {

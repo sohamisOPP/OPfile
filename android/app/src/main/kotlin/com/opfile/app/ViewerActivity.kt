@@ -123,12 +123,13 @@ class ViewerActivity : AppCompatActivity() {
                     val snapJson = RustCore.getTaskSnapshot(taskId)
                     val snap = RustCore.parseEnvelope(snapJson) { it.optString("state", "") }
                     val state = snap.getOrNull() ?: ""
-                    if (state == "completed" || state == "done") {
+                    if (state.equals("Completed", ignoreCase = true) || state.equals("Done", ignoreCase = true)) {
                         done = true
-                    } else if (state == "error" || state == "failed" || state == "cancelled") {
+                    } else if (state.equals("Failed", ignoreCase = true) || state.equals("Error", ignoreCase = true) || state.equals("Canceled", ignoreCase = true) || state.equals("Cancelled", ignoreCase = true)) {
                         break
                     }
                 }
+                RustCore.dropTask(taskId)
                 if (cacheFile.exists() && cacheFile.length() > 0) {
                     return cacheFile
                 }
