@@ -67,6 +67,10 @@ class DonutWheelView @JvmOverloads constructor(
     private val innerRect = RectF()
 
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+        override fun onDown(e: MotionEvent): Boolean {
+            return true
+        }
+
         override fun onScroll(
             e1: MotionEvent?,
             e2: MotionEvent,
@@ -112,22 +116,26 @@ class DonutWheelView @JvmOverloads constructor(
             val dx = e.x - cx
             val dy = e.y - cy
             val dist = hypot(dx.toDouble(), dy.toDouble()).toFloat()
-            val outerR = min(width, height) * 0.45f
-            val innerR = outerR * 0.55f
+            val outerR = min(width, height) * 0.44f
+            val innerR = outerR * 0.52f
+
+            if (targets.isEmpty()) return false
 
             if (dist in innerR..outerR) {
-                // Tapped on the donut ring - select current top format
-                getSelectedFormat()?.let { fmt ->
-                    performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                    onFormatSelectedListener?.invoke(fmt)
-                }
+                // Tapped directly on a sector: select that tapped sector format
+                val touchAngle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                val sweep = 360f / targets.size
+                val normalized = ((touchAngle - currentRotation) % 360f + 360f) % 360f
+                val tappedIdx = (normalized / sweep).toInt().coerceIn(0, targets.size - 1)
+                val fmt = targets[tappedIdx]
+                performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                onFormatSelectedListener?.invoke(fmt)
                 return true
             } else if (dist < innerR) {
-                // Tapped center - confirm selection
-                getSelectedFormat()?.let { fmt ->
-                    performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                    onFormatSelectedListener?.invoke(fmt)
-                }
+                // Tapped center circle: confirm the currently active format
+                val fmt = getSelectedFormat() ?: targets[0]
+                performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                onFormatSelectedListener?.invoke(fmt)
                 return true
             }
             return false
@@ -167,7 +175,16 @@ class DonutWheelView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
+        val handled = gestureDetector.onTouchEvent(event)
+        if (event.action == MotionEvent.ACTION_UP) {
+            performClick()
+        }
+        return true
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -184,43 +201,45 @@ class DonutWheelView @JvmOverloads constructor(
 
         val count = targets.size
         val sweep = 360f / count
+        val selectedIdx = getSelectedIndex()
 
         // Draw sectors
         for (i in 0 until count) {
             val startAngle = currentRotation + i * sweep
+            val isSelected = (i == selectedIdx)
             val isEven = (i % 2 == 0)
-            sectorPaint.color = if (isEven) Color.parseColor("#1C1C1E") else Color.parseColor("#141414")
+
+            sectorPaint.color = if (isSelected) Color.parseColor("#2E2E32") else (if (isEven) Color.parseColor("#1C1C1E") else Color.parseColor("#121212"))
 
             val path = Path()
             path.arcTo(ringRect, startAngle, sweep)
             path.arcTo(innerRect, startAngle + sweep, -sweep)
             path.close()
             canvas.drawPath(path, sectorPaint)
+
+            if (isSelected) {
+                sectorBorderPaint.color = Color.WHITE
+                sectorBorderPaint.strokeWidth = 3f
+            } else {
+                sectorBorderPaint.color = Color.parseColor("#222222")
+                sectorBorderPaint.strokeWidth = 1.5f
+            }
             canvas.drawPath(path, sectorBorderPaint)
 
-            // Text on sector rotated along the sector curve
+            // Text on sector: STRAIGHT, upright, horizontally centered, NEVER upside down
             val midAngleDeg = startAngle + sweep / 2f
             val midAngleRad = Math.toRadians(midAngleDeg.toDouble())
             val textR = (outerR + innerR) / 2f
             val tx = cx + (textR * cos(midAngleRad)).toFloat()
             val ty = cy + (textR * sin(midAngleRad)).toFloat()
 
-            canvas.save()
-            canvas.rotate(midAngleDeg + 90f, tx, ty)
             textPaint.textSize = if (count > 8) 22f else 26f
+            textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#D0D0D0")
             val label = targets[i].uppercase()
-            canvas.drawText(label, tx, ty + 8f, textPaint)
-            canvas.restore()
+            val fm = textPaint.fontMetrics
+            val baseline = ty - (fm.descent + fm.ascent) / 2f
+            canvas.drawText(label, tx, baseline, textPaint)
         }
-
-        // Draw top indicator pointer
-        val pointerPath = Path().apply {
-            moveTo(cx, cy - outerR - 10f)
-            lineTo(cx - 16f, cy - outerR + 20f)
-            lineTo(cx + 16f, cy - outerR + 20f)
-            close()
-        }
-        canvas.drawPath(pointerPath, pointerPaint)
 
         // Center circle (translucent glass AMOLED)
         val centerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -236,7 +255,7 @@ class DonutWheelView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, innerR - 4f, centerBorder)
 
         // Center selected format text
-        val sel = getSelectedFormat() ?: ""
+        val sel = getSelectedFormat() ?: (if (targets.isNotEmpty()) targets[0] else "")
         val isCompress = sel.lowercase() in listOf("zip", "7z", "tar.gz", "tar.xz", "tar.bz2", "gz", "xz")
         canvas.drawText(sel.uppercase(), cx, cy - 6f, centerTextPaint)
         canvas.drawText(if (isCompress) "TAP TO COMPRESS" else "TAP TO CONVERT", cx, cy + 30f, centerSubPaint)

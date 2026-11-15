@@ -216,12 +216,77 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ToolsActivity::class.java))
         }
 
+        findViewById<View>(R.id.btn_multi_select).setOnClickListener {
+            if (isSelectionMode) {
+                exitSelectionMode()
+            } else {
+                isSelectionMode = true
+                showSelectionActionBar()
+                tvSelectionCount.text = "${selectedItems.size} selected"
+                adapter.notifyDataSetChanged()
+            }
+        }
+
         findViewById<View>(R.id.btn_select_all).setOnClickListener {
             selectAllItems()
         }
 
         findViewById<View>(R.id.btn_selection_cancel).setOnClickListener {
             exitSelectionMode()
+        }
+
+        findViewById<View>(R.id.btn_selection_copy).setOnClickListener {
+            if (selectedItems.isNotEmpty()) {
+                clipboardPaths.clear()
+                clipboardPaths.addAll(selectedItems)
+                clipboardCutMode = false
+                val count = clipboardPaths.size
+                updateClipboardFab()
+                exitSelectionMode()
+                Toast.makeText(this, "Copied $count items to clipboard", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        findViewById<View>(R.id.btn_selection_cut).setOnClickListener {
+            if (selectedItems.isNotEmpty()) {
+                clipboardPaths.clear()
+                clipboardPaths.addAll(selectedItems)
+                clipboardCutMode = true
+                val count = clipboardPaths.size
+                updateClipboardFab()
+                exitSelectionMode()
+                Toast.makeText(this, "Cut $count items to clipboard", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        findViewById<View>(R.id.btn_selection_compress).setOnClickListener {
+            if (selectedItems.isNotEmpty()) {
+                val paths = selectedItems.toList()
+                exitSelectionMode()
+                showCompressDialog(paths)
+            }
+        }
+
+        findViewById<View>(R.id.btn_selection_delete).setOnClickListener {
+            if (selectedItems.isNotEmpty()) {
+                val count = selectedItems.size
+                val paths = selectedItems.toList()
+                AlertDialog.Builder(this)
+                    .setTitle("Delete $count items?")
+                    .setMessage("Are you sure you want to permanently delete the selected items?")
+                    .setPositiveButton("Delete") { _, _ ->
+                        exitSelectionMode()
+                        val json = JSONArray(paths).toString()
+                        val taskJson = RustCore.startDeleteTask(json)
+                        val parsed = RustCore.parseEnvelope(taskJson) { it.optLong("task_id") }
+                        parsed.onSuccess { id ->
+                            TaskForegroundService.startTask(this, id, "Deleting $count items", currentPath)
+                            showTaskProgressDialog(id, "Deleting items...")
+                        }
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
         }
 
         fabMain.setOnClickListener {
@@ -269,6 +334,11 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         handleFileTap(item)
                     }
+                }
+            },
+            onRowLongClick = { item ->
+                if (!item.isParentRow) {
+                    toggleItemSelection(item.path)
                 }
             },
             onRowMoreClick = { item ->
@@ -623,13 +693,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun selectAllItems() {
-        for (item in displayEntries) {
-            if (!item.isParentRow) {
+        val nonParentItems = displayEntries.filter { !it.isParentRow }
+        if (selectedItems.size == nonParentItems.size && nonParentItems.isNotEmpty()) {
+            exitSelectionMode()
+        } else {
+            for (item in nonParentItems) {
                 selectedItems.add(item.path)
             }
+            isSelectionMode = true
+            showSelectionActionBar()
+            tvSelectionCount.text = "${selectedItems.size} selected"
+            adapter.notifyDataSetChanged()
         }
-        tvSelectionCount.text = "${selectedItems.size} selected"
-        adapter.notifyDataSetChanged()
     }
 
     private fun exitSelectionMode() {
@@ -1297,6 +1372,7 @@ class FileListAdapter(
     private val isSelected: (String) -> Boolean,
     private val onIconClick: (RowItem) -> Unit,
     private val onRowClick: (RowItem) -> Unit,
+    private val onRowLongClick: (RowItem) -> Unit,
     private val onRowMoreClick: (RowItem) -> Unit
 ) : RecyclerView.Adapter<FileListAdapter.ViewHolder>() {
 
@@ -1354,9 +1430,21 @@ class FileListAdapter(
             holder.btnRowMore.visibility = View.VISIBLE
         }
 
-        // Split-tap listeners
+        // Split-tap & long-press listeners
         holder.iconTouchTarget.setOnClickListener { onIconClick(item) }
         holder.textTouchTarget.setOnClickListener { onRowClick(item) }
+        holder.container.setOnLongClickListener {
+            if (!item.isParentRow) {
+                onRowLongClick(item)
+                true
+            } else false
+        }
+        holder.textTouchTarget.setOnLongClickListener {
+            if (!item.isParentRow) {
+                onRowLongClick(item)
+                true
+            } else false
+        }
         holder.btnRowMore.setOnClickListener { onRowMoreClick(item) }
     }
 

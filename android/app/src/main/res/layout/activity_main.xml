@@ -89,7 +89,17 @@
                         app:tint="@color/text_muted" />
                 </LinearLayout>
 
-                <!-- Search & Sort Actions -->
+                <!-- Multi-select, Search, Sort & Tools Actions -->
+                <ImageView
+                    android:id="@+id/btn_multi_select"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Multi-Select"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_checklist"
+                    app:tint="@color/text_primary" />
+
                 <ImageView
                     android:id="@+id/btn_search"
                     android:layout_width="40dp"
@@ -172,39 +182,84 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="12dp"
-                android:paddingEnd="12dp"
+                android:paddingEnd="4dp"
                 android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/btn_selection_cancel"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Close selection"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/tv_selection_count"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:paddingStart="8dp"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    tools:text="3 items selected" />
+                    tools:text="3 selected" />
 
-                <TextView
+                <!-- Select All -->
+                <ImageView
                     android:id="@+id/btn_select_all"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:padding="8dp"
-                    android:text="Select All"
-                    android:textColor="@color/text_primary"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Select All"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_checklist"
+                    app:tint="@color/text_primary" />
 
-                <TextView
-                    android:id="@+id/btn_selection_cancel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:padding="8dp"
-                    android:text="Cancel"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                <!-- Copy -->
+                <ImageView
+                    android:id="@+id/btn_selection_copy"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Copy selected"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_copy"
+                    app:tint="@color/text_primary" />
+
+                <!-- Cut -->
+                <ImageView
+                    android:id="@+id/btn_selection_cut"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Cut selected"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_cut"
+                    app:tint="@color/text_primary" />
+
+                <!-- Compress -->
+                <ImageView
+                    android:id="@+id/btn_selection_compress"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Compress selected"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_archive"
+                    app:tint="@color/text_primary" />
+
+                <!-- Delete -->
+                <ImageView
+                    android:id="@+id/btn_selection_delete"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Delete selected"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_delete"
+                    app:tint="@color/text_primary" />
             </LinearLayout>
 
             <!-- File List RecyclerView: instant single-frame rendering, zero bouncy scroll -->

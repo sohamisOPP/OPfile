@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/row_container"
     android:layout_width="match_parent"
@@ -32,14 +33,17 @@
                 android:src="@drawable/ic_file"
                 android:contentDescription="File icon" />
 
-            <View
+            <ImageView
                 android:id="@+id/selection_indicator"
-                android:layout_width="10dp"
-                android:layout_height="10dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_gravity="top|end"
-                android:layout_marginTop="6dp"
-                android:layout_marginEnd="6dp"
-                android:background="@drawable/bg_badge_violet"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/bg_check_badge"
+                android:src="@drawable/ic_check"
+                app:tint="@color/amoled_black"
+                android:padding="2dp"
                 android:visibility="gone" />
         </FrameLayout>
 
