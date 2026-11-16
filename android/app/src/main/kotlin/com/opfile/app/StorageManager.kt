@@ -86,24 +86,22 @@ object StorageManager {
         for (dir in extDirs) {
             if (dir == null) continue
             val path = dir.absolutePath
-            val parts = path.split("/Android/data")
-            if (parts.isNotEmpty()) {
-                val root = parts[0]
-                if (root != PRIMARY_STORAGE_PATH && !list.any { it.path == root }) {
-                    val name = if (root.contains("usb", ignoreCase = true) || root.contains("otg", ignoreCase = true)) {
-                        "USB Drive"
-                    } else {
-                        "SD Card (${File(root).name})"
-                    }
-                    list.add(
-                        StorageVolumeInfo(
-                            name = name,
-                            path = root,
-                            isPrimary = false,
-                            isRemovable = true
-                        )
-                    )
+            val idx = path.indexOf("/Android/data", ignoreCase = true)
+            val root = if (idx > 0) path.substring(0, idx) else null
+            if (root != null && root != PRIMARY_STORAGE_PATH && !list.any { it.path == root }) {
+                val name = if (root.contains("usb", ignoreCase = true) || root.contains("otg", ignoreCase = true)) {
+                    "USB Drive"
+                } else {
+                    "SD Card (${File(root).name})"
                 }
+                list.add(
+                    StorageVolumeInfo(
+                        name = name,
+                        path = root,
+                        isPrimary = false,
+                        isRemovable = true
+                    )
+                )
             }
         }
 

@@ -140,7 +140,9 @@ class ToolsActivity : AppCompatActivity() {
                             bmp.setPixel(x, y, if (bools[y * w + x]) Color.BLACK else Color.WHITE)
                         }
                     }
-                    ivWifiQr.setImageBitmap(Bitmap.createScaledBitmap(bmp, 320, 320, false))
+                    val scaled = Bitmap.createScaledBitmap(bmp, 320, 320, false)
+                    bmp.recycle()
+                    ivWifiQr.setImageBitmap(scaled)
                     ivWifiQr.visibility = View.VISIBLE
                 }
             }
@@ -154,23 +156,29 @@ class ToolsActivity : AppCompatActivity() {
         parsed.onSuccess { taskId ->
             lifecycleScope.launch(Dispatchers.IO) {
                 var finished = false
-                while (!finished) {
-                    kotlinx.coroutines.delay(300)
-                    val snap = RustCore.getTaskSnapshot(taskId)
-                    val sObj = try { JSONObject(snap).optJSONObject("data") } catch (_: Exception) { null }
-                    val st = sObj?.optString("state")
-                    if (st == "Completed") {
-                        finished = true
-                        withContext(Dispatchers.Main) {
-                            AlertDialog.Builder(this@ToolsActivity)
-                                .setTitle("Storage Analysis Complete")
-                                .setMessage("Hierarchical treemap generated successfully across storage.")
-                                .setPositiveButton("OK", null)
-                                .show()
+                var attempts = 0
+                try {
+                    while (!finished && attempts < 200) {
+                        attempts++
+                        kotlinx.coroutines.delay(300)
+                        val snap = RustCore.getTaskSnapshot(taskId)
+                        val sObj = try { JSONObject(snap).optJSONObject("data") } catch (_: Exception) { null }
+                        val st = sObj?.optString("state")
+                        if (st == "Completed") {
+                            finished = true
+                            withContext(Dispatchers.Main) {
+                                AlertDialog.Builder(this@ToolsActivity)
+                                    .setTitle("Storage Analysis Complete")
+                                    .setMessage("Hierarchical treemap generated successfully across storage.")
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                            }
+                        } else if (st == "Failed" || st == "Canceled") {
+                            finished = true
                         }
-                    } else if (st == "Failed") {
-                        finished = true
                     }
+                } finally {
+                    RustCore.dropTask(taskId)
                 }
             }
         }

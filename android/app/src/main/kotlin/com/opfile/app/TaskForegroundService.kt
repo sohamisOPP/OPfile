@@ -191,7 +191,7 @@ class TaskForegroundService : Service() {
         return NotificationCompat.Builder(this, OpfileApplication.TASK_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
-            .setSmallIcon(R.drawable.ic_sort)
+            .setSmallIcon(R.drawable.ic_file)
             .setContentIntent(openAppIntent)
             .setProgress(100, progress, progress == 0)
             .setOngoing(true)

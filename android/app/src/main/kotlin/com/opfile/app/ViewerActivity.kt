@@ -69,7 +69,34 @@ class ViewerActivity : AppCompatActivity() {
         entryPath = intent.getStringExtra(EXTRA_ENTRY_PATH) ?: ""
 
         initViews()
+        setupBackNavigation()
         loadFileContent()
+    }
+
+    private fun setupBackNavigation() {
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (textContainer.visibility == View.VISIBLE && isTextLoaded && etCode.text.toString() != initialText) {
+                    androidx.appcompat.app.AlertDialog.Builder(this@ViewerActivity)
+                        .setTitle("Unsaved Changes")
+                        .setMessage("You have unsaved changes in this document. Do you want to discard them?")
+                        .setPositiveButton("Discard") { _, _ ->
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                        }
+                        .setNeutralButton("Save") { _, _ ->
+                            saveCurrentText {
+                                finish()
+                            }
+                        }
+                        .setNegativeButton("Keep Editing", null)
+                        .show()
+                    return
+                }
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+            }
+        })
     }
 
     private fun initViews() {
@@ -89,7 +116,7 @@ class ViewerActivity : AppCompatActivity() {
         tvTitle.text = fileName
 
         findViewById<View>(R.id.viewer_btn_back).setOnClickListener {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
         }
 
         findViewById<View>(R.id.viewer_btn_mode).setOnClickListener {
@@ -118,19 +145,22 @@ class ViewerActivity : AppCompatActivity() {
                 val taskId = parsed.getOrNull() ?: return null
                 var done = false
                 var attempts = 0
-                while (!done && attempts < 60) {
-                    delay(50)
-                    attempts++
-                    val snapJson = RustCore.getTaskSnapshot(taskId)
-                    val snap = RustCore.parseEnvelope(snapJson) { it.optString("state", "") }
-                    val state = snap.getOrNull() ?: ""
-                    if (state.equals("Completed", ignoreCase = true) || state.equals("Done", ignoreCase = true)) {
-                        done = true
-                    } else if (state.equals("Failed", ignoreCase = true) || state.equals("Error", ignoreCase = true) || state.equals("Canceled", ignoreCase = true) || state.equals("Cancelled", ignoreCase = true)) {
-                        break
+                try {
+                    while (!done && attempts < 60) {
+                        delay(50)
+                        attempts++
+                        val snapJson = RustCore.getTaskSnapshot(taskId)
+                        val snap = RustCore.parseEnvelope(snapJson) { it.optString("state", "") }
+                        val state = snap.getOrNull() ?: ""
+                        if (state.equals("Completed", ignoreCase = true) || state.equals("Done", ignoreCase = true)) {
+                            done = true
+                        } else if (state.equals("Failed", ignoreCase = true) || state.equals("Error", ignoreCase = true) || state.equals("Canceled", ignoreCase = true) || state.equals("Cancelled", ignoreCase = true)) {
+                            break
+                        }
                     }
+                } finally {
+                    RustCore.dropTask(taskId)
                 }
-                RustCore.dropTask(taskId)
                 if (cacheFile.exists() && cacheFile.length() > 0) {
                     return cacheFile
                 }
@@ -411,25 +441,7 @@ class ViewerActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (textContainer.visibility == View.VISIBLE && isTextLoaded && etCode.text.toString() != initialText) {
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Unsaved Changes")
-                .setMessage("You have unsaved changes in this document. Do you want to discard them?")
-                .setPositiveButton("Discard") { _, _ ->
-                    super.onBackPressed()
-                }
-                .setNeutralButton("Save") { _, _ ->
-                    saveCurrentText {
-                        finish()
-                    }
-                }
-                .setNegativeButton("Keep Editing", null)
-                .show()
-            return
-        }
-        super.onBackPressed()
-    }
+
 
     private fun hideAllContainers() {
         textContainer.visibility = View.GONE

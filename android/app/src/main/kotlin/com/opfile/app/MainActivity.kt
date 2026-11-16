@@ -97,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         initViews()
         setupDrawer()
         setupRecyclerView()
+        setupBackNavigation()
 
         // Handle intent if launched from external VIEW archive action
         handleIncomingArchiveIntent(intent)
@@ -128,11 +129,12 @@ class MainActivity : AppCompatActivity() {
                 "file" -> uri.path?.let { p -> if (File(p).exists()) p else null }
                 "content" -> {
                     try {
-                        val displayName = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        val rawName = contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                             val nameIdx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
                             if (nameIdx != -1 && cursor.moveToFirst()) cursor.getString(nameIdx) else null
                         } ?: "incoming_archive.zip"
-                        val tempFile = File(cacheDir, "incoming_$displayName")
+                        val safeName = File(rawName).name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                        val tempFile = File(cacheDir, "incoming_$safeName")
                         contentResolver.openInputStream(uri)?.use { input ->
                             tempFile.outputStream().use { output ->
                                 input.copyTo(output)
@@ -850,31 +852,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-            return
-        }
-        if (isSelectionMode) {
-            exitSelectionMode()
-            return
-        }
-        if (searchBarContainer.visibility == View.VISIBLE) {
-            searchBarContainer.visibility = View.GONE
-            searchQuery = ""
-            etSearchQuery.setText("")
-            refreshDirectory()
-            return
-        }
-        if (isVirtualArchive) {
-            navigateUp()
-            return
-        }
-        if (currentPath != StorageManager.PRIMARY_STORAGE_PATH && currentPath != "/") {
-            navigateUp()
-            return
-        }
-        super.onBackPressed()
+    private fun setupBackNavigation() {
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    return
+                }
+                if (isSelectionMode) {
+                    exitSelectionMode()
+                    return
+                }
+                if (searchBarContainer.visibility == View.VISIBLE) {
+                    searchBarContainer.visibility = View.GONE
+                    searchQuery = ""
+                    etSearchQuery.setText("")
+                    refreshDirectory()
+                    return
+                }
+                if (isVirtualArchive) {
+                    navigateUp()
+                    return
+                }
+                if (currentPath != StorageManager.PRIMARY_STORAGE_PATH && currentPath != "/") {
+                    navigateUp()
+                    return
+                }
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+            }
+        })
     }
 
     private fun toggleSearchBar() {
@@ -1280,6 +1287,14 @@ class MainActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             if (isApk) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+                    val reqIntent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(reqIntent)
+                    Toast.makeText(this, "Please allow OPfile to install packages", Toast.LENGTH_SHORT).show()
+                    return
+                }
                 startActivity(intent)
             } else {
                 val chooser = Intent.createChooser(intent, "Open with...").apply {

@@ -147,6 +147,7 @@ class CushionTreemapView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_UP) {
+            performClick()
             val scaleX = width.toFloat() / baseWidth
             val scaleY = height.toFloat() / baseHeight
             val tx = event.x
@@ -163,7 +164,13 @@ class CushionTreemapView @JvmOverloads constructor(
                     invalidate()
                     onNodeSelected?.invoke(n)
                     try {
-                        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                        val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? android.os.VibratorManager
+                            vm?.defaultVibrator
+                        } else {
+                            @Suppress("DEPRECATION")
+                            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                        }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             vibrator?.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
                         } else {
@@ -175,6 +182,11 @@ class CushionTreemapView @JvmOverloads constructor(
                 }
             }
         }
+        return true
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
         return true
     }
 
