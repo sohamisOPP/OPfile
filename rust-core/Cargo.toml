@@ -49,7 +49,7 @@ xz2 = "0.1"
 zstd = "0.13"
 
 # Media, image, vector, PDF, spreadsheet, audio engines
-image = { version = "0.25", default-features = true }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp", "ico", "tiff", "tga", "qoi", "pnm", "hdr"] }
 resvg = "0.44"
 lopdf = "0.34"
 symphonia = { version = "0.5", features = ["all"] }
@@ -63,4 +63,4 @@ opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
-panic = "unwind"
+panic = "abort"

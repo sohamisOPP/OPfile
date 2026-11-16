@@ -281,7 +281,8 @@ class DonutWheelView @JvmOverloads constructor(
             }
             textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#D0D0D0")
 
-            if (hasSubtitle) {
+            val sub = slice.subtitle
+            if (sub != null) {
                 // If label has multiple words (e.g. "Trace to SVG"), handle neatly
                 val labelLines = if (slice.label.contains(" ") && slice.label.length > 8) {
                     slice.label.split(" ", limit = 2)
@@ -292,10 +293,10 @@ class DonutWheelView @JvmOverloads constructor(
                 if (labelLines.size > 1) {
                     canvas.drawText(labelLines[0], tx, ty - 16f, textPaint)
                     canvas.drawText(labelLines[1], tx, ty + 2f, textPaint)
-                    canvas.drawText(slice.subtitle!!, tx, ty + 20f, sliceSubPaint)
+                    canvas.drawText(sub, tx, ty + 20f, sliceSubPaint)
                 } else {
                     canvas.drawText(slice.label, tx, ty - 6f, textPaint)
-                    canvas.drawText(slice.subtitle!!, tx, ty + 15f, sliceSubPaint)
+                    canvas.drawText(sub, tx, ty + 15f, sliceSubPaint)
                 }
             } else {
                 val words = if (slice.label.contains(" ") && slice.label.length > 9) {

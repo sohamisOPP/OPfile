@@ -1921,7 +1921,11 @@ class FileListAdapter(
                                     }
                                     if (rot != 0f) {
                                         val m = Matrix().apply { postRotate(rot) }
-                                        Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+                                        val rotated = Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+                                        if (rotated != raw) {
+                                            raw.recycle()
+                                        }
+                                        rotated
                                     } else raw
                                 } else null
                             } catch (_: Exception) { null }

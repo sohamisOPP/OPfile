@@ -105,8 +105,9 @@ class TaskForegroundService : Service() {
                     val isCanceled = snapshot.state == "Canceled"
 
                     if (isCompleted || isFailed || isCanceled) {
-                        if (isCompleted && scanPathAfterComplete != null) {
-                            scanExportedFile(scanPathAfterComplete!!)
+                        val pathToScan = scanPathAfterComplete
+                        if (isCompleted && pathToScan != null) {
+                            scanExportedFile(pathToScan)
                         }
                         RustCore.dropTask(taskId)
                         activeTaskId = null

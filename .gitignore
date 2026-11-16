@@ -8,5 +8,7 @@ android/build/
 android/app/build/
 android/local.properties
 *.keystore
+*.jks
+release/OPfile-*.apk
 !android/app/debug.keystore
 

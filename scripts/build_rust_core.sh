@@ -8,10 +8,12 @@ JNI_LIBS_DIR="$PROJECT_ROOT/android/app/src/main/jniLibs"
 
 export ANDROID_NDK_HOME="/home/soham/Android/Sdk/ndk/26.3.11579264"
 export NDK_HOME="$ANDROID_NDK_HOME"
+export RUSTFLAGS="--remap-path-prefix=${HOME}=~ --remap-path-prefix=${SCRIPT_DIR}/..=. --remap-path-prefix=/home/soham=~"
 
 echo "=== Building OPfile Rust Core with cargo-ndk ==="
 echo "NDK: $ANDROID_NDK_HOME"
 echo "Output: $JNI_LIBS_DIR"
+echo "RUSTFLAGS: $RUSTFLAGS"
 
 mkdir -p "$JNI_LIBS_DIR/arm64-v8a"
 mkdir -p "$JNI_LIBS_DIR/armeabi-v7a"

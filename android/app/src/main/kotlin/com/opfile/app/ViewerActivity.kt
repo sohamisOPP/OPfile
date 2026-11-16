@@ -107,7 +107,8 @@ class ViewerActivity : AppCompatActivity() {
 
     private suspend fun resolveFileForViewing(): File? {
         if (isArchiveEntry && archivePath.isNotEmpty() && entryPath.isNotEmpty()) {
-            val cacheFile = File(cacheDir, "preview_${File(fileName).name}")
+            val safeName = File(fileName).name.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
+            val cacheFile = File(cacheDir, "preview_$safeName")
             if (cacheFile.exists()) {
                 cacheFile.delete()
             }
@@ -145,7 +146,7 @@ class ViewerActivity : AppCompatActivity() {
             ext in listOf("png", "jpg", "jpeg", "webp", "bmp", "gif", "ico") -> {
                 showImage()
             }
-            ext in listOf("mp4", "mkv", "webm", "mov", "3gp", "avi") -> {
+            ext in listOf("mp4", "mkv", "webm", "mov", "3gp", "avi", "mp3", "wav", "ogg", "flac", "m4a", "aac", "opus") -> {
                 showVideo()
             }
             ext == "pdf" -> {
@@ -265,9 +266,15 @@ class ViewerActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 if (targetFile != null && targetFile.exists()) {
                     try {
-                        pdfDescriptor = ParcelFileDescriptor.open(targetFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        pdfRenderer = PdfRenderer(pdfDescriptor!!)
-                        rvPdf.adapter = PdfPageAdapter(pdfRenderer!!)
+                        val pfd = ParcelFileDescriptor.open(targetFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        if (pfd != null) {
+                            pdfDescriptor = pfd
+                            val renderer = PdfRenderer(pfd)
+                            pdfRenderer = renderer
+                            rvPdf.adapter = PdfPageAdapter(renderer)
+                        } else {
+                            showError("Unable to open PDF descriptor: $fileName")
+                        }
                     } catch (e: Exception) {
                         try {
                             pdfDescriptor?.close()
@@ -383,7 +390,7 @@ class ViewerActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveCurrentText() {
+    private fun saveCurrentText(onSaved: (() -> Unit)? = null) {
         val newText = etCode.text.toString()
         lifecycleScope.launch(Dispatchers.IO) {
             val resJson = if (isArchiveEntry) {
@@ -396,6 +403,7 @@ class ViewerActivity : AppCompatActivity() {
                 parsed.onSuccess {
                     initialText = newText
                     Toast.makeText(this@ViewerActivity, "Saved successfully", Toast.LENGTH_SHORT).show()
+                    onSaved?.invoke()
                 }.onFailure { err ->
                     Toast.makeText(this@ViewerActivity, "Save failed: ${err.message}", Toast.LENGTH_LONG).show()
                 }
@@ -412,8 +420,9 @@ class ViewerActivity : AppCompatActivity() {
                     super.onBackPressed()
                 }
                 .setNeutralButton("Save") { _, _ ->
-                    saveCurrentText()
-                    super.onBackPressed()
+                    saveCurrentText {
+                        finish()
+                    }
                 }
                 .setNegativeButton("Keep Editing", null)
                 .show()
@@ -481,6 +490,17 @@ class PdfPageAdapter(private val renderer: PdfRenderer) : RecyclerView.Adapter<P
             page.close()
             holder.ivPage.setImageBitmap(bitmap)
         } catch (_: Throwable) {}
+    }
+
+    override fun onViewRecycled(holder: PageViewHolder) {
+        super.onViewRecycled(holder)
+        val drawable = holder.ivPage.drawable as? android.graphics.drawable.BitmapDrawable
+        drawable?.bitmap?.let { bmp ->
+            if (!bmp.isRecycled) {
+                bmp.recycle()
+            }
+        }
+        holder.ivPage.setImageDrawable(null)
     }
 
     override fun getItemCount(): Int = renderer.pageCount

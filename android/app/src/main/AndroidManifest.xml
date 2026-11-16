@@ -27,7 +27,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="OPfile"
         android:requestLegacyExternalStorage="true"
-        android:supportsRtl="false"
+        tools:targetApi="29"
+        android:supportsRtl="true"
         android:theme="@style/Theme.OPfile"
         android:hardwareAccelerated="true">
 

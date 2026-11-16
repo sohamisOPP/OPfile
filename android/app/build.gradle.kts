@@ -14,15 +14,26 @@ android {
         targetSdk = 35
         versionCode = 200
         versionName = "2.0.0"
+    }
 
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 
     signingConfigs {
-        getByName("debug") {
-            // Uses standard debug keystore if no custom release keystore is supplied
+        create("release") {
+            storeFile = file("release.jks")
+            storePassword = "opfile_release_2026"
+            keyAlias = "opfile"
+            keyPassword = "opfile_release_2026"
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 
@@ -34,7 +45,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false

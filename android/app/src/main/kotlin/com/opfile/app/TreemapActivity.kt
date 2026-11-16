@@ -103,67 +103,79 @@ class TreemapActivity : AppCompatActivity() {
 
             var finished = false
             var attempts = 0
-            while (!finished && attempts < 250) {
-                attempts++
-                delay(200)
-                val snap = RustCore.getTaskSnapshot(taskId)
-                val sObj = try { JSONObject(snap).optJSONObject("data") } catch (_: Exception) { null }
-                val state = sObj?.optString("state")
+            try {
+                while (!finished && attempts < 250) {
+                    attempts++
+                    delay(200)
+                    val snap = RustCore.getTaskSnapshot(taskId)
+                    val sObj = try { JSONObject(snap).optJSONObject("data") } catch (_: Exception) { null }
+                    val state = sObj?.optString("state")
 
-                if (state == "Completed") {
-                    finished = true
-                    val resultRaw = sObj.opt("result_json")
-                    val arr = when (resultRaw) {
-                        is JSONArray -> resultRaw
-                        is String -> try { JSONArray(resultRaw) } catch (_: Exception) { JSONArray() }
-                        else -> JSONArray()
-                    }
-
-                    val list = mutableListOf<TreemapNodeUi>()
-                    for (i in 0 until arr.length()) {
-                        val o = arr.optJSONObject(i) ?: continue
-                        list.add(
-                            TreemapNodeUi(
-                                name = o.optString("name", "Unknown"),
-                                path = o.optString("path", ""),
-                                size = o.optLong("size", 0L),
-                                isDir = o.optBoolean("is_dir", true),
-                                x = o.optDouble("x", 0.0).toFloat(),
-                                y = o.optDouble("y", 0.0).toFloat(),
-                                w = o.optDouble("w", 0.0).toFloat(),
-                                h = o.optDouble("h", 0.0).toFloat(),
-                                depth = o.optInt("depth", 1)
-                            )
-                        )
-                    }
-
-                    totalAnalyzedBytes = list.sumOf { it.size }.coerceAtLeast(1L)
-                    parsedNodes = list
-
-                    withContext(Dispatchers.Main) {
-                        loadingContainer.visibility = View.GONE
-                        contentContainer.visibility = View.VISIBLE
-                        val rootName = if (targetPath == StorageManager.PRIMARY_STORAGE_PATH) "Internal Storage" else File(targetPath).name
-                        tvSubtitle.text = "$rootName • ${formatSize(totalAnalyzedBytes)} across ${list.size} items"
-
-                        cushionTreemapView.setNodes(list, 1000f, 1000f)
-
-                        val adapter = LargestItemsAdapter(list, totalAnalyzedBytes) { selected ->
-                            cushionTreemapView.setSelected(selected)
-                            updateSelectedCard(selected)
+                    if (state == "Completed") {
+                        finished = true
+                        val resultRaw = sObj.opt("result_json")
+                        val arr = when (resultRaw) {
+                            is JSONArray -> resultRaw
+                            is String -> try { JSONArray(resultRaw) } catch (_: Exception) { JSONArray() }
+                            else -> JSONArray()
                         }
-                        rvLargestItems.adapter = adapter
 
-                        list.firstOrNull()?.let { updateSelectedCard(it) }
-                    }
-                } else if (state == "Failed") {
-                    finished = true
-                    withContext(Dispatchers.Main) {
-                        loadingContainer.visibility = View.GONE
-                        contentContainer.visibility = View.VISIBLE
-                        Toast.makeText(this@TreemapActivity, "Storage analysis encountered an error", Toast.LENGTH_SHORT).show()
+                        val list = mutableListOf<TreemapNodeUi>()
+                        for (i in 0 until arr.length()) {
+                            val o = arr.optJSONObject(i) ?: continue
+                            list.add(
+                                TreemapNodeUi(
+                                    name = o.optString("name", "Unknown"),
+                                    path = o.optString("path", ""),
+                                    size = o.optLong("size", 0L),
+                                    isDir = o.optBoolean("is_dir", true),
+                                    x = o.optDouble("x", 0.0).toFloat(),
+                                    y = o.optDouble("y", 0.0).toFloat(),
+                                    w = o.optDouble("w", 0.0).toFloat(),
+                                    h = o.optDouble("h", 0.0).toFloat(),
+                                    depth = o.optInt("depth", 1)
+                                )
+                            )
+                        }
+
+                        totalAnalyzedBytes = list.sumOf { it.size }.coerceAtLeast(1L)
+                        parsedNodes = list
+
+                        withContext(Dispatchers.Main) {
+                            loadingContainer.visibility = View.GONE
+                            contentContainer.visibility = View.VISIBLE
+                            val rootName = if (targetPath == StorageManager.PRIMARY_STORAGE_PATH) "Internal Storage" else File(targetPath).name
+                            tvSubtitle.text = "$rootName • ${formatSize(totalAnalyzedBytes)} across ${list.size} items"
+
+                            cushionTreemapView.setNodes(list, 1000f, 1000f)
+
+                            val adapter = LargestItemsAdapter(list, totalAnalyzedBytes) { selected ->
+                                cushionTreemapView.setSelected(selected)
+                                updateSelectedCard(selected)
+                            }
+                            rvLargestItems.adapter = adapter
+
+                            list.firstOrNull()?.let { updateSelectedCard(it) }
+                        }
+                    } else if (state == "Failed") {
+                        finished = true
+                        withContext(Dispatchers.Main) {
+                            loadingContainer.visibility = View.GONE
+                            contentContainer.visibility = View.VISIBLE
+                            Toast.makeText(this@TreemapActivity, "Storage analysis encountered an error", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
+
+                if (!finished) {
+                    withContext(Dispatchers.Main) {
+                        loadingContainer.visibility = View.GONE
+                        contentContainer.visibility = View.VISIBLE
+                        Toast.makeText(this@TreemapActivity, "Storage analysis timed out", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } finally {
+                RustCore.dropTask(taskId)
             }
         }
     }
