@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 import android.app.Dialog
 import android.content.Context
@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        prefs = getSharedPreferences("opfile_sticky_prefs", Context.MODE_PRIVATE)
+        prefs = getSharedPreferences("prismfiles_sticky_prefs", Context.MODE_PRIVATE)
         loadStickyPreferences()
 
         initViews()
@@ -1144,7 +1144,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFileActionSheet(item: RowItem) {
         val sheet = BottomSheetDialog(this)
-        sheet.window?.setWindowAnimations(R.style.Animation_OPfile_BottomSheet)
+        sheet.window?.setWindowAnimations(R.style.Animation_PrismFiles_BottomSheet)
         val v = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_file_actions, null)
         sheet.setContentView(v)
 
@@ -1300,7 +1300,7 @@ class MainActivity : AppCompatActivity() {
                         data = Uri.parse("package:$packageName")
                     }
                     startActivity(reqIntent)
-                    Toast.makeText(this, "Please allow OPfile to install packages", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Please allow PrismFiles to install packages", Toast.LENGTH_SHORT).show()
                     return
                 }
                 startActivity(intent)
@@ -1322,7 +1322,7 @@ class MainActivity : AppCompatActivity() {
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_donut_wheel, null)
         dialog.setContentView(v)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
+        dialog.window?.setWindowAnimations(R.style.Animation_PrismFiles_Dialog)
 
         v.findViewById<TextView>(R.id.tv_donut_title)?.text = "Convert / Compress"
         v.findViewById<TextView>(R.id.tv_donut_subtitle)?.text = "${File(filePath).name} • Rotate wheel to select target format"
@@ -1419,7 +1419,7 @@ class MainActivity : AppCompatActivity() {
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_compress, null)
         dialog.setContentView(v)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
+        dialog.window?.setWindowAnimations(R.style.Animation_PrismFiles_Dialog)
 
         val etName = v.findViewById<EditText>(R.id.et_archive_name)
         val defaultName = if (paths.size == 1) File(paths[0]).nameWithoutExtension else "archive"
@@ -1520,7 +1520,7 @@ class MainActivity : AppCompatActivity() {
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_progress, null)
         dialog.setContentView(v)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.window?.setWindowAnimations(R.style.Animation_OPfile_Dialog)
+        dialog.window?.setWindowAnimations(R.style.Animation_PrismFiles_Dialog)
         dialog.setCancelable(false)
 
         val tvTitle = v.findViewById<TextView>(R.id.tv_dialog_task_title)
@@ -1836,7 +1836,7 @@ data class RowItem(
             )
         }
 
-        fun formatSize(bytes: Long): String = com.opfile.app.formatSize(bytes)
+        fun formatSize(bytes: Long): String = com.prismfiles.app.formatSize(bytes)
     }
 }
 

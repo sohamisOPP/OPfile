@@ -262,7 +262,7 @@ async fn handle_http_client(stream: TcpStream, root: PathBuf) -> std::io::Result
             stream.write_all(&buf[..n]).await?;
         }
     } else if target.is_dir() {
-        let mut html = String::from("<!DOCTYPE html><html><head><meta charset='utf-8'><title>OPfile</title><style>body{background:#000;color:#fff;font-family:sans-serif;padding:16px}a{color:#6C5CE7;text-decoration:none;display:block;padding:8px 0;border-bottom:1px solid #222}</style></head><body><h2>OPfile Transfer</h2>");
+        let mut html = String::from("<!DOCTYPE html><html><head><meta charset='utf-8'><title>PrismFiles</title><style>body{background:#000;color:#fff;font-family:sans-serif;padding:16px}a{color:#6C5CE7;text-decoration:none;display:block;padding:8px 0;border-bottom:1px solid #222}</style></head><body><h2>PrismFiles Transfer</h2>");
         if let Ok(rd) = fs::read_dir(&target) {
             for e in rd.filter_map(Result::ok) {
                 let name = e.file_name().to_string_lossy().into_owned();
@@ -292,7 +292,7 @@ async fn handle_http_client(stream: TcpStream, root: PathBuf) -> std::io::Result
 async fn handle_ftp_client(stream: TcpStream, root: PathBuf, ip: String) -> std::io::Result<()> {
     let (r, mut w) = stream.into_split();
     let mut reader = BufReader::new(r);
-    w.write_all(b"220 OPfile Offline FTP Ready\r\n").await?;
+    w.write_all(b"220 PrismFiles Offline FTP Ready\r\n").await?;
 
     let mut cwd = root.clone();
     let mut pasv_listener: Option<TcpListener> = None;
@@ -366,9 +366,9 @@ async fn handle_ftp_client(stream: TcpStream, root: PathBuf, ip: String) -> std:
                                 let line_out = if cmd == "NLST" {
                                     format!("{name}\r\n")
                                 } else if is_dir {
-                                    format!("drwxr-xr-x 1 opfile opfile {size} Jan 01 00:00 {name}\r\n")
+                                    format!("drwxr-xr-x 1 prismfiles prismfiles {size} Jan 01 00:00 {name}\r\n")
                                 } else {
-                                    format!("-rw-r--r-- 1 opfile opfile {size} Jan 01 00:00 {name}\r\n")
+                                    format!("-rw-r--r-- 1 prismfiles prismfiles {size} Jan 01 00:00 {name}\r\n")
                                 };
                                 let _ = data.write_all(line_out.as_bytes()).await;
                             }

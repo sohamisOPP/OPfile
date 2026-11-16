@@ -114,7 +114,7 @@
             android:background="@color/amoled_black"
             android:padding="8dp">
 
-            <com.opfile.app.CushionTreemapView
+            <com.prismfiles.app.CushionTreemapView
                 android:id="@+id/cushion_treemap_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />

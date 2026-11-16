@@ -1,15 +1,15 @@
-use opfile_core::archive_ops::{
+use prismfiles_core::archive_ops::{
     create_archive, extract_archive, extract_single_entry, list_archive_virtual, search_archive,
     test_archive_integrity, update_archive_entry, CompressionProfile, CreateArchiveRequest,
 };
-use opfile_core::convert_ops::{convert_file, get_valid_targets_for_extension, total_format_count, ConvertRequest};
-use opfile_core::fs_ops::{list_directory, SortField};
-use opfile_core::utilities::{compute_checksums, read_hex_window, shred_paths_dod};
+use prismfiles_core::convert_ops::{convert_file, get_valid_targets_for_extension, total_format_count, ConvertRequest};
+use prismfiles_core::fs_ops::{list_directory, SortField};
+use prismfiles_core::utilities::{compute_checksums, read_hex_window, shred_paths_dod};
 use std::fs;
 use std::path::PathBuf;
 
 fn temp_dir(name: &str) -> PathBuf {
-    let p = std::env::temp_dir().join(format!("opfile_test_{name}_{}", std::process::id()));
+    let p = std::env::temp_dir().join(format!("prismfiles_test_{name}_{}", std::process::id()));
     let _ = fs::remove_dir_all(&p);
     fs::create_dir_all(&p).unwrap();
     p
@@ -160,7 +160,7 @@ fn test_format_registry_and_conversions() {
 
     // JSON -> YAML -> CSV -> XLSX -> SQLite
     let json_path = dir.join("rows.json");
-    fs::write(&json_path, r#"[{"name":"OPfile","score":"100"}]"#).unwrap();
+    fs::write(&json_path, r#"[{"name":"PrismFiles","score":"100"}]"#).unwrap();
     for fmt in ["yaml", "csv", "xlsx", "sqlite", "parquet"] {
         let out = convert_file(
             &ConvertRequest {

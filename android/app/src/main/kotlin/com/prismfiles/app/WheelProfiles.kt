@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 data class WheelSliceItem(
     val label: String,

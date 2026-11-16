@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

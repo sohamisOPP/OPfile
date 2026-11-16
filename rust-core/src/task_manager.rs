@@ -22,7 +22,7 @@ pub fn tokio_rt() -> OpResult<&'static Runtime> {
     }
     let rt = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
-        .thread_name("opfile-tokio")
+        .thread_name("prismfiles-tokio")
         .build()
         .map_err(|e| OpfileError::io(format!("Failed to initialize Tokio runtime: {e}")))?;
     let _ = TOKIO_RT.set(rt);
@@ -40,7 +40,7 @@ pub fn rayon_pool() -> OpResult<&'static ThreadPool> {
         .unwrap_or(4);
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
-        .thread_name(|i| format!("opfile-rayon-{i}"))
+        .thread_name(|i| format!("prismfiles-rayon-{i}"))
         .build()
         .map_err(|e| OpfileError::io(format!("Failed to initialize Rayon pool: {e}")))?;
     let _ = RAYON_POOL.set(pool);
@@ -301,7 +301,7 @@ impl AtomicPartFile {
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("output");
-        let part_path = final_path.with_file_name(format!(".{file_name}.{stamp}.opfile.part"));
+        let part_path = final_path.with_file_name(format!(".{file_name}.{stamp}.prismfiles.part"));
         let file = File::create(&part_path)?;
         let writer = BufWriter::with_capacity(STREAM_BUF_SIZE, file);
         Ok((
@@ -326,7 +326,7 @@ impl AtomicPartFile {
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("output");
-        let part_path = final_path.with_file_name(format!(".{file_name}.{stamp}.opfile.part"));
+        let part_path = final_path.with_file_name(format!(".{file_name}.{stamp}.prismfiles.part"));
         Ok(Self {
             part_path,
             final_path: final_path.to_path_buf(),

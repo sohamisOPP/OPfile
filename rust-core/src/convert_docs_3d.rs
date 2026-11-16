@@ -712,7 +712,7 @@ fn write_minimal_epub(text: &str, dst: &Path) -> OpResult<()> {
     zw.start_file("META-INF/container.xml", def).map_err(|e| OpfileError::convert(e.to_string()))?;
     zw.write_all(br#"<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>"#)?;
     zw.start_file("OEBPS/content.opf", def).map_err(|e| OpfileError::convert(e.to_string()))?;
-    zw.write_all(br#"<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>OPfile Export</dc:title><dc:language>en</dc:language></metadata><manifest><item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>"#)?;
+    zw.write_all(br#"<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>PrismFiles Export</dc:title><dc:language>en</dc:language></metadata><manifest><item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="ch1"/></spine></package>"#)?;
     zw.start_file("OEBPS/chapter1.xhtml", def).map_err(|e| OpfileError::convert(e.to_string()))?;
     let body = format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><body><pre>{}</pre></body></html>",
@@ -1163,7 +1163,7 @@ fn write_mesh(mesh: &MeshData, dst: &Path, dst_ext: &str) -> OpResult<()> {
             }
         }
         "stl" => {
-            writeln!(w, "solid opfile")?;
+            writeln!(w, "solid prismfiles")?;
             for f in &mesh.faces {
                 if let (Some(a), Some(b), Some(c)) = (mesh.verts.get(f[0]), mesh.verts.get(f[1]), mesh.verts.get(f[2])) {
                     writeln!(w, "facet normal 0 0 1\n  outer loop")?;
@@ -1173,7 +1173,7 @@ fn write_mesh(mesh: &MeshData, dst: &Path, dst_ext: &str) -> OpResult<()> {
                     writeln!(w, "  endloop\nendfacet")?;
                 }
             }
-            writeln!(w, "endsolid opfile")?;
+            writeln!(w, "endsolid prismfiles")?;
         }
         "ply" => {
             writeln!(
@@ -1216,7 +1216,7 @@ fn write_mesh(mesh: &MeshData, dst: &Path, dst_ext: &str) -> OpResult<()> {
                 base64::engine::general_purpose::STANDARD.encode(&bin)
             );
             let gltf = serde_json::json!({
-                "asset": { "version": "2.0", "generator": "OPfile" },
+                "asset": { "version": "2.0", "generator": "PrismFiles" },
                 "buffers": [{ "uri": uri, "byteLength": bin.len() }],
                 "bufferViews": [{ "buffer": 0, "byteOffset": 0, "byteLength": bin.len() }],
                 "accessors": [{ "bufferView": 0, "componentType": 5126, "count": mesh.verts.len(), "type": "VEC3" }],
@@ -1339,13 +1339,13 @@ fn write_gis_points(pts: &[(f64, f64)], dst: &Path, dst_ext: &str) -> OpResult<(
                 "features": [{
                     "type": "Feature",
                     "geometry": { "type": "LineString", "coordinates": coords },
-                    "properties": { "generator": "OPfile" }
+                    "properties": { "generator": "PrismFiles" }
                 }]
             });
             w.write_all(serde_json::to_string_pretty(&geo)?.as_bytes())?;
         }
         "gpx" => {
-            writeln!(w, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<gpx version=\"1.1\" creator=\"OPfile\"><trk><trkseg>")?;
+            writeln!(w, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<gpx version=\"1.1\" creator=\"PrismFiles\"><trk><trkseg>")?;
             for &(lon, lat) in pts {
                 writeln!(w, "  <trkpt lat=\"{lat}\" lon=\"{lon}\"/>")?;
             }

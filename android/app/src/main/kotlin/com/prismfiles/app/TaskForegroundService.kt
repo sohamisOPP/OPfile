@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 import android.app.Notification
 import android.app.PendingIntent
@@ -15,10 +15,10 @@ import java.io.File
 class TaskForegroundService : Service() {
 
     companion object {
-        const val ACTION_START = "com.opfile.app.ACTION_START_TASK"
-        const val ACTION_PAUSE = "com.opfile.app.ACTION_PAUSE_TASK"
-        const val ACTION_RESUME = "com.opfile.app.ACTION_RESUME_TASK"
-        const val ACTION_CANCEL = "com.opfile.app.ACTION_CANCEL_TASK"
+        const val ACTION_START = "com.prismfiles.app.ACTION_START_TASK"
+        const val ACTION_PAUSE = "com.prismfiles.app.ACTION_PAUSE_TASK"
+        const val ACTION_RESUME = "com.prismfiles.app.ACTION_RESUME_TASK"
+        const val ACTION_CANCEL = "com.prismfiles.app.ACTION_CANCEL_TASK"
 
         const val EXTRA_TASK_ID = "extra_task_id"
         const val EXTRA_TASK_TITLE = "extra_task_title"
@@ -58,7 +58,7 @@ class TaskForegroundService : Service() {
 
         when (action) {
             ACTION_START -> {
-                val title = intent.getStringExtra(EXTRA_TASK_TITLE) ?: "OPfile Operation"
+                val title = intent.getStringExtra(EXTRA_TASK_TITLE) ?: "PrismFiles Operation"
                 scanPathAfterComplete = intent.getStringExtra(EXTRA_SCAN_PATH)
                 activeTaskId = taskId
                 val notif = buildNotification(title, 0, "Starting...", false)
@@ -199,7 +199,7 @@ class TaskForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, OpfileApplication.TASK_CHANNEL_ID)
+        return NotificationCompat.Builder(this, PrismFilesApplication.TASK_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
             .setSmallIcon(R.drawable.ic_file)

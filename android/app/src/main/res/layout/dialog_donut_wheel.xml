@@ -26,7 +26,7 @@
         android:textSize="12sp" />
 
     <!-- 120fps hardware-accelerated Radial Donut View -->
-    <com.opfile.app.DonutWheelView
+    <com.prismfiles.app.DonutWheelView
         android:id="@+id/donut_wheel_view"
         android:layout_width="320dp"
         android:layout_height="320dp"

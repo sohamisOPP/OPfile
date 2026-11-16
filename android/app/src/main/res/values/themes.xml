@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.OPfile" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.PrismFiles" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:windowBackground">@color/amoled_black</item>
         <item name="android:colorBackground">@color/amoled_black</item>
         <item name="colorPrimary">@color/monochrome_white</item>
@@ -10,40 +10,40 @@
         <item name="android:statusBarColor">@color/toolbar_surface</item>
         <item name="android:navigationBarColor">@color/amoled_black</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowAnimationStyle">@style/Animation.OPfile.Window</item>
-        <item name="bottomSheetDialogTheme">@style/Theme.OPfile.BottomSheet</item>
-        <item name="alertDialogTheme">@style/Theme.OPfile.Dialog</item>
+        <item name="android:windowAnimationStyle">@style/Animation.PrismFiles.Window</item>
+        <item name="bottomSheetDialogTheme">@style/Theme.PrismFiles.BottomSheet</item>
+        <item name="alertDialogTheme">@style/Theme.PrismFiles.Dialog</item>
     </style>
 
-    <style name="Animation.OPfile.Window" parent="@android:style/Animation.Activity">
+    <style name="Animation.PrismFiles.Window" parent="@android:style/Animation.Activity">
         <item name="android:activityOpenEnterAnimation">@anim/activity_slide_enter</item>
         <item name="android:activityOpenExitAnimation">@anim/activity_slide_exit</item>
         <item name="android:activityCloseEnterAnimation">@anim/activity_back_enter</item>
         <item name="android:activityCloseExitAnimation">@anim/activity_back_exit</item>
     </style>
 
-    <style name="Animation.OPfile.Dialog" parent="@android:style/Animation.Dialog">
+    <style name="Animation.PrismFiles.Dialog" parent="@android:style/Animation.Dialog">
         <item name="android:windowEnterAnimation">@anim/dialog_pop_enter</item>
         <item name="android:windowExitAnimation">@anim/dialog_pop_exit</item>
     </style>
 
-    <style name="Animation.OPfile.BottomSheet" parent="">
+    <style name="Animation.PrismFiles.BottomSheet" parent="">
         <item name="android:windowEnterAnimation">@anim/bottom_sheet_enter</item>
         <item name="android:windowExitAnimation">@anim/bottom_sheet_exit</item>
     </style>
 
-    <style name="Theme.OPfile.BottomSheet" parent="Theme.Material3.Dark.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/Widget.OPfile.BottomSheet</item>
+    <style name="Theme.PrismFiles.BottomSheet" parent="Theme.Material3.Dark.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.PrismFiles.BottomSheet</item>
         <item name="android:backgroundDimAmount">0.55</item>
-        <item name="android:windowAnimationStyle">@style/Animation.OPfile.BottomSheet</item>
+        <item name="android:windowAnimationStyle">@style/Animation.PrismFiles.BottomSheet</item>
     </style>
 
-    <style name="Widget.OPfile.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+    <style name="Widget.PrismFiles.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
         <item name="backgroundTint">@color/glass_surface</item>
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.OPfile.Sheet</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.PrismFiles.Sheet</item>
     </style>
 
-    <style name="ShapeAppearance.OPfile.Sheet" parent="">
+    <style name="ShapeAppearance.PrismFiles.Sheet" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSizeTopLeft">16dp</item>
         <item name="cornerSizeTopRight">16dp</item>
@@ -51,13 +51,13 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
-    <style name="Theme.OPfile.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+    <style name="Theme.PrismFiles.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="android:windowBackground">@drawable/bg_glass_dialog</item>
         <item name="colorSurface">@color/glass_surface</item>
         <item name="colorPrimary">@color/monochrome_white</item>
         <item name="colorOnPrimary">@color/amoled_black</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
-        <item name="android:windowAnimationStyle">@style/Animation.OPfile.Dialog</item>
+        <item name="android:windowAnimationStyle">@style/Animation.PrismFiles.Dialog</item>
     </style>
 </resources>

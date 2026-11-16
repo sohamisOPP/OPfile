@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OPfile"
+rootProject.name = "PrismFiles"
 include(":app")

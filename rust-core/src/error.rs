@@ -21,6 +21,8 @@ pub struct OpfileError {
     pub message: String,
 }
 
+pub type PrismFilesError = OpfileError;
+
 impl OpfileError {
     pub fn new(code: ErrorCode, message: impl Into<String>) -> Self {
         Self {

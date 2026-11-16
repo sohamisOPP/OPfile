@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    namespace = "com.opfile.app"
+    namespace = "com.prismfiles.app"
     compileSdk = 35
     ndkVersion = "26.3.11579264"
 
     defaultConfig {
-        applicationId = "com.opfile.app"
+        applicationId = "com.prismfiles.app"
         minSdk = 24
         targetSdk = 35
         versionCode = 200

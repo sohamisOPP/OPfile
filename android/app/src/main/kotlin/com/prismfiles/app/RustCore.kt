@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -6,7 +6,7 @@ import org.json.JSONObject
 object RustCore {
     init {
         try {
-            System.loadLibrary("opfile_core")
+            System.loadLibrary("prismfiles_core")
         } catch (e: UnsatisfiedLinkError) {
             e.printStackTrace()
         }
@@ -81,7 +81,7 @@ object RustCore {
                 val errObj = root.optJSONObject("error")
                 val msg = errObj?.optString("message") ?: "Unknown error"
                 val code = errObj?.optString("code") ?: "Generic"
-                Result.failure(OpfileException(code, msg))
+                Result.failure(PrismFilesException(code, msg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -89,7 +89,8 @@ object RustCore {
     }
 }
 
-class OpfileException(val code: String, message: String) : Exception("[$code] $message")
+class PrismFilesException(val code: String, message: String) : Exception("[$code] $message")
+typealias OpfileException = PrismFilesException
 
 data class FileEntryItem(
     val name: String,

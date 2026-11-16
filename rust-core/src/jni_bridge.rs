@@ -62,7 +62,7 @@ struct TaskStarted {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_listDirectory(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_listDirectory(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -92,7 +92,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_listDirectory(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_searchRecursive(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_searchRecursive(
     mut env: JNIEnv,
     _class: JClass,
     root: JString,
@@ -107,7 +107,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_searchRecursive(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_createFolder(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_createFolder(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -120,7 +120,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_createFolder(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_createEmptyFile(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_createEmptyFile(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -133,7 +133,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_createEmptyFile(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_renameEntry(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_renameEntry(
     mut env: JNIEnv,
     _class: JClass,
     old_path: JString,
@@ -153,7 +153,7 @@ pub struct TextContentResponse {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_readTextBounded(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_readTextBounded(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -168,7 +168,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_readTextBounded(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_writeTextAtomic(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_writeTextAtomic(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -183,7 +183,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_writeTextAtomic(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_listArchiveVirtual(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_listArchiveVirtual(
     mut env: JNIEnv,
     _class: JClass,
     archive_path: JString,
@@ -199,7 +199,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_listArchiveVirtual(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_searchArchive(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_searchArchive(
     mut env: JNIEnv,
     _class: JClass,
     archive_path: JString,
@@ -215,7 +215,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_searchArchive(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_inspectApkManifest(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_inspectApkManifest(
     mut env: JNIEnv,
     _class: JClass,
     apk_path: JString,
@@ -227,7 +227,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_inspectApkManifest(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_updateArchiveEntry(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_updateArchiveEntry(
     mut env: JNIEnv,
     _class: JClass,
     archive_path: JString,
@@ -251,7 +251,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_updateArchiveEntry(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_getConversionTargets(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_getConversionTargets(
     mut env: JNIEnv,
     _class: JClass,
     ext: JString,
@@ -263,7 +263,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_getConversionTargets(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_readHexWindow(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_readHexWindow(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -277,7 +277,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_readHexWindow(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_previewBatchRename(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_previewBatchRename(
     mut env: JNIEnv,
     _class: JClass,
     req_json: JString,
@@ -290,7 +290,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_previewBatchRename(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_executeBatchRename(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_executeBatchRename(
     mut env: JNIEnv,
     _class: JClass,
     ops_json: JString,
@@ -303,7 +303,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_executeBatchRename(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_undoBatchRename(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_undoBatchRename(
     mut env: JNIEnv,
     _class: JClass,
     ops_json: JString,
@@ -316,7 +316,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_undoBatchRename(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_generateQrMatrix(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_generateQrMatrix(
     mut env: JNIEnv,
     _class: JClass,
     text: JString,
@@ -328,7 +328,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_generateQrMatrix(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startWifiServer(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startWifiServer(
     mut env: JNIEnv,
     _class: JClass,
     root_dir: JString,
@@ -342,7 +342,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startWifiServer(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_stopWifiServer(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_stopWifiServer(
     mut env: JNIEnv,
     _class: JClass,
 ) -> jstring {
@@ -350,7 +350,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_stopWifiServer(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_getWifiServerStatus(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_getWifiServerStatus(
     mut env: JNIEnv,
     _class: JClass,
 ) -> jstring {
@@ -358,7 +358,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_getWifiServerStatus(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startCopyMoveTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startCopyMoveTask(
     mut env: JNIEnv,
     _class: JClass,
     sources_json: JString,
@@ -380,7 +380,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startCopyMoveTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startDeleteTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startDeleteTask(
     mut env: JNIEnv,
     _class: JClass,
     paths_json: JString,
@@ -397,7 +397,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startDeleteTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startShredTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startShredTask(
     mut env: JNIEnv,
     _class: JClass,
     paths_json: JString,
@@ -414,7 +414,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startShredTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startExtractTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startExtractTask(
     mut env: JNIEnv,
     _class: JClass,
     archive_path: JString,
@@ -447,7 +447,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startExtractTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startExtractSingleTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startExtractSingleTask(
     mut env: JNIEnv,
     _class: JClass,
     archive_path: JString,
@@ -475,7 +475,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startExtractSingleTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startCreateArchiveTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startCreateArchiveTask(
     mut env: JNIEnv,
     _class: JClass,
     req_json: JString,
@@ -492,7 +492,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startCreateArchiveTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startTestArchiveTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startTestArchiveTask(
     mut env: JNIEnv,
     _class: JClass,
     archive_path: JString,
@@ -514,7 +514,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startTestArchiveTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startConvertTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startConvertTask(
     mut env: JNIEnv,
     _class: JClass,
     req_json: JString,
@@ -534,7 +534,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startConvertTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startChecksumTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startChecksumTask(
     mut env: JNIEnv,
     _class: JClass,
     path: JString,
@@ -550,7 +550,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startChecksumTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_startTreemapTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_startTreemapTask(
     mut env: JNIEnv,
     _class: JClass,
     root_dir: JString,
@@ -568,7 +568,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_startTreemapTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_getTaskSnapshot(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_getTaskSnapshot(
     mut env: JNIEnv,
     _class: JClass,
     task_id: jlong,
@@ -580,7 +580,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_getTaskSnapshot(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_pauseTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_pauseTask(
     _env: JNIEnv,
     _class: JClass,
     task_id: jlong,
@@ -593,7 +593,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_pauseTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_resumeTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_resumeTask(
     _env: JNIEnv,
     _class: JClass,
     task_id: jlong,
@@ -606,7 +606,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_resumeTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_cancelTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_cancelTask(
     _env: JNIEnv,
     _class: JClass,
     task_id: jlong,
@@ -619,7 +619,7 @@ pub extern "system" fn Java_com_opfile_app_RustCore_cancelTask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_opfile_app_RustCore_dropTask(
+pub extern "system" fn Java_com_prismfiles_app_RustCore_dropTask(
     _env: JNIEnv,
     _class: JClass,
     task_id: jlong,

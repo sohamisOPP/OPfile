@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 import android.app.AlertDialog
 import android.content.Intent

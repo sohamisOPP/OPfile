@@ -1,4 +1,4 @@
-package com.opfile.app
+package com.prismfiles.app
 
 import android.app.Application
 import android.app.NotificationChannel
@@ -9,11 +9,11 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 
-class OpfileApplication : Application(), DefaultLifecycleObserver {
+class PrismFilesApplication : Application(), DefaultLifecycleObserver {
 
     companion object {
-        const val TASK_CHANNEL_ID = "opfile_tasks_channel"
-        lateinit var instance: OpfileApplication
+        const val TASK_CHANNEL_ID = "prismfiles_tasks_channel"
+        lateinit var instance: PrismFilesApplication
             private set
     }
 
@@ -28,7 +28,7 @@ class OpfileApplication : Application(), DefaultLifecycleObserver {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 TASK_CHANNEL_ID,
-                "OPfile Tasks",
+                "PrismFiles Tasks",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Shows real-time progress for file copying, moving, archiving, and format conversion"

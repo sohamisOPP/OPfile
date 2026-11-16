@@ -1,5 +1,5 @@
 -keepclasseswithmembernames class * {
     native <methods>;
 }
--keep class com.opfile.app.** { *; }
+-keep class com.prismfiles.app.** { *; }
 -dontwarn kotlin.**

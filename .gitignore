@@ -9,6 +9,7 @@ android/app/build/
 android/local.properties
 *.keystore
 *.jks
+release/PrismFiles-*.apk
 release/OPfile-*.apk
 *.apk
 !android/app/debug.keystore

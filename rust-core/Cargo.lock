@@ -1265,56 +1265,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
-name = "opfile_core"
-version = "2.0.0"
-dependencies = [
- "aes-gcm",
- "base64",
- "blake3",
- "brotli",
- "bzip2",
- "calamine",
- "chrono",
- "crc32fast",
- "csv",
- "dashmap",
- "flate2",
- "hex",
- "hmac",
- "hound",
- "image",
- "jni",
- "lopdf",
- "md-5",
- "memmap2",
- "natord",
- "pbkdf2",
- "pulldown-cmark",
- "qrcode",
- "quick-xml",
- "rand",
- "rayon",
- "regex",
- "resvg",
- "rusqlite",
- "rust_xlsxwriter",
- "serde",
- "serde_json",
- "serde_yaml",
- "sevenz-rust",
- "sha2",
- "symphonia",
- "tar",
- "tokio",
- "toml",
- "unicode-normalization",
- "walkdir",
- "xz2",
- "zip 2.6.1",
- "zstd",
-]
-
-[[package]]
 name = "parking_lot_core"
 version = "0.9.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1406,6 +1356,56 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
+]
+
+[[package]]
+name = "prismfiles_core"
+version = "2.0.0"
+dependencies = [
+ "aes-gcm",
+ "base64",
+ "blake3",
+ "brotli",
+ "bzip2",
+ "calamine",
+ "chrono",
+ "crc32fast",
+ "csv",
+ "dashmap",
+ "flate2",
+ "hex",
+ "hmac",
+ "hound",
+ "image",
+ "jni",
+ "lopdf",
+ "md-5",
+ "memmap2",
+ "natord",
+ "pbkdf2",
+ "pulldown-cmark",
+ "qrcode",
+ "quick-xml",
+ "rand",
+ "rayon",
+ "regex",
+ "resvg",
+ "rusqlite",
+ "rust_xlsxwriter",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sevenz-rust",
+ "sha2",
+ "symphonia",
+ "tar",
+ "tokio",
+ "toml",
+ "unicode-normalization",
+ "walkdir",
+ "xz2",
+ "zip 2.6.1",
+ "zstd",
 ]
 
 [[package]]

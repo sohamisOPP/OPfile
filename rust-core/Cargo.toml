@@ -1,11 +1,11 @@
 [package]
-name = "opfile_core"
+name = "prismfiles_core"
 version = "2.0.0"
 edition = "2021"
-description = "OPfile high-performance offline Rust core for file management, archiving, and 255+ format conversion"
+description = "PrismFiles high-performance offline Rust core for file management, archiving, and 255+ format conversion"
 
 [lib]
-name = "opfile_core"
+name = "prismfiles_core"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]

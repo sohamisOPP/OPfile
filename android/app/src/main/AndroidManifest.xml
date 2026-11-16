@@ -22,14 +22,14 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
-        android:name=".OpfileApplication"
+        android:name=".PrismFilesApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="OPfile"
+        android:label="PrismFiles"
         android:requestLegacyExternalStorage="true"
         tools:targetApi="29"
         android:supportsRtl="true"
-        android:theme="@style/Theme.OPfile"
+        android:theme="@style/Theme.PrismFiles"
         android:hardwareAccelerated="true">
 
         <activity

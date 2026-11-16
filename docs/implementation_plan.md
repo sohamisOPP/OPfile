@@ -1,9 +1,9 @@
-# Implementation Plan: OPfile — Native Android & Rust Core File/Archive Manager and Universal Converter
+# Implementation Plan: PrismFiles — Native Android & Rust Core File/Archive Manager and Universal Converter
 
 ## Goal Description
-Build **OPfile**, a 100% offline, pure native Android file manager, archive manager, and universal format converter styled as an exact visual and functional clone of **ZArchiver**. The application is powered by a high-performance, multithreaded **Rust** core compiled via `cargo-ndk` for `aarch64-linux-android` (`arm64-v8a`), `armv7-linux-androideabi` (`armeabi-v7a`), and `x86_64-linux-android` (`x86_64`) across a panic-free JNI FFI bridge with zero WebView wrappers.
+Build **PrismFiles**, a 100% offline, pure native Android file manager, archive manager, and universal format converter styled as an exact visual and functional clone of **ZArchiver**. The application is powered by a high-performance, multithreaded **Rust** core compiled via `cargo-ndk` for `aarch64-linux-android` (`arm64-v8a`), `armv7-linux-androideabi` (`armeabi-v7a`), and `x86_64-linux-android` (`x86_64`) across a panic-free JNI FFI bridge with zero WebView wrappers.
 
-OPfile features a Pitch-Black AMOLED UI (`#000000` background, `#141414` toolbar, `#222222` crisp dividers, `#6C5CE7` electric violet accents, `#FFFFFF` typography, 20% translucent glassmorphic dialogs/sheets, zero emojis, no percentage badges), instant single-frame directory rendering, pinned ".." parent navigation, split-tap multi-selection, dynamic morphing "+" to paste FAB with live badge, a hardware-accelerated 120fps radial Donut wheel format converter (255+ formats), full archive virtual folder browsing and manipulation (ZIP, 7z, RAR, TAR, GZ, BZ2, XZ, ZSTD, ISO, DMG, QCOW2, VDI, VMDK), APK/XAPK installer with binary AXML manifest inspector, built-in media and hex viewers, DoD 5220.22-M file shredder, Cushion Treemap disk analyzer, regex batch renaming, and a local Wi-Fi HTTP/FTP server with QR code pairing.
+PrismFiles features a Pitch-Black AMOLED UI (`#000000` background, `#141414` toolbar, `#222222` crisp dividers, `#6C5CE7` electric violet accents, `#FFFFFF` typography, 20% translucent glassmorphic dialogs/sheets, zero emojis, no percentage badges), instant single-frame directory rendering, pinned ".." parent navigation, split-tap multi-selection, dynamic morphing "+" to paste FAB with live badge, a hardware-accelerated 120fps radial Donut wheel format converter (255+ formats), full archive virtual folder browsing and manipulation (ZIP, 7z, RAR, TAR, GZ, BZ2, XZ, ZSTD, ISO, DMG, QCOW2, VDI, VMDK), APK/XAPK installer with binary AXML manifest inspector, built-in media and hex viewers, DoD 5220.22-M file shredder, Cushion Treemap disk analyzer, regex batch renaming, and a local Wi-Fi HTTP/FTP server with QR code pairing.
 
 ---
 
@@ -15,7 +15,7 @@ OPfile features a Pitch-Black AMOLED UI (`#000000` background, `#141414` toolbar
 
 > [!IMPORTANT]
 > **GitLab Push Target**:
-> The git remote is currently configured to `git@gitlab.com:opfile-group/opfile.git`, which authenticated successfully with SSH (`@solankifamily23`). The release APK (`OPfile.apk`) and all source commits will be pushed to the `main` branch.
+> The git remote is currently configured to `git@gitlab.com:opfile-group/opfile.git`, which authenticated successfully with SSH (`@solankifamily23`). The release APK (`PrismFiles.apk`) and all source commits will be pushed to the `main` branch.
 
 > [!NOTE]
 > **Android NDK & Compilation Architecture**:
@@ -135,7 +135,7 @@ The Rust codebase in `rust-core` provides production implementations of file sca
 #### [NEW] `android/app/src/main/kotlin/com/opfile/app/MainActivity.kt`
 - Main directory browsing activity styled strictly on ZArchiver:
   - **AMOLED Pitch-Black Theme**: `#000000` background, `#141414` toolbar, `#222222` crisp row dividers, `#6C5CE7` electric violet accents, `#FFFFFF` typography.
-  - **Zero Emojis & Clean Top Header**: Displays only clean `OPfile` title, active directory name, clickable path dropdown, and drawer hamburger icon.
+  - **Zero Emojis & Clean Top Header**: Displays only clean `PrismFiles` title, active directory name, clickable path dropdown, and drawer hamburger icon.
   - **Single-Frame Instant Rendering**: Disabled decorative page transitions and bouncy overscroll physics (`overScrollMode = OVER_SCROLL_NEVER`, item animator = `null`).
   - **Pinned ".." Parent Navigation**: The top row is always `..` (unless at root storage), paired with hardware back button traversal.
   - **Split-Tap Selection System**:
@@ -213,7 +213,7 @@ The Rust codebase in `rust-core` provides production implementations of file sca
 - Ensure packaging includes `jniLibs` for `arm64-v8a`, `armeabi-v7a`, `x86_64`.
 - Setup release build type with ProGuard optimization, resource shrinking, and debug keystore fallback for reproducible standalone APK packaging.
 
-#### [NEW] `release/OPfile.apk`
+#### [NEW] `release/PrismFiles.apk`
 - Compiled and signed release APK with all 3 Rust architectures bundled.
 
 #### [EXECUTE] GitLab Push
@@ -247,7 +247,7 @@ The Rust codebase in `rust-core` provides production implementations of file sca
    ```
 
 ### Manual Verification
-- Verify that `OPfile.apk` exists in the repo root and installs cleanly.
+- Verify that `PrismFiles.apk` exists in the repo root and installs cleanly.
 - Confirm Pitch-Black AMOLED theme (`#000000`), toolbar (`#141414`), violet accents (`#6C5CE7`), zero emojis, and dense single-line rows.
 - Verify pinned `..` navigation, split-tap multi-select, morphing FAB clipboard paste button.
 - Test virtual archive exploration, 120fps Donut wheel format converter, in-app viewers, and tools.

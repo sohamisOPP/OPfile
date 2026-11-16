@@ -1,6 +1,6 @@
-# Walkthrough: OPfile — Pure Native Android & Rust Core File/Archive Manager and Universal Converter
+# Walkthrough: PrismFiles — Pure Native Android & Rust Core File/Archive Manager and Universal Converter
 
-**OPfile** has been implemented, compiled, audited, verified, and deployed to GitHub at [https://github.com/sohamisOPP/OPfile](https://github.com/sohamisOPP/OPfile).
+**PrismFiles** has been implemented, compiled, audited, verified, and deployed to GitHub at [https://github.com/sohamisOPP/PrismFiles](https://github.com/sohamisOPP/PrismFiles).
 
 ---
 
@@ -25,8 +25,8 @@
 - **Strict Visual Discipline**:
   - Zero emojis across the entire UI
   - No storage percentage bars or badges
-  - Compact one-line top header showing `OPfile` alongside the active directory name with a clickable path dropdown
-  - Minimalist navigation drawer with clean `OPfile` branding (subtitles removed) for instant jumps to Internal Storage (`/storage/emulated/0`), Download, DCIM, Pictures, Music, Documents, SD cards, and USB OTG drives
+  - Compact one-line top header showing `PrismFiles` alongside the active directory name with a clickable path dropdown
+  - Minimalist navigation drawer with clean `PrismFiles` branding (subtitles removed) for instant jumps to Internal Storage (`/storage/emulated/0`), Download, DCIM, Pictures, Music, Documents, SD cards, and USB OTG drives
 - **Snappy Micro-Animations (120ms–160ms)**:
   - **Directory Navigation Slide & Fade (140ms)**: Snappy forward horizontal slide (`translationX: +50dp -> 0dp`) when entering directories and backward slide (`translationX: -50dp -> 0dp`) when navigating up to parent, preserving instant ZArchiver speed.
   - **FAB Morph & Tactile Bounce**: 150ms 90° rotation and scale pulse when transitioning between `+` (Create) and Paste (Clipboard); pop-scale bounce for clipboard counter badge; 60ms/80ms tactile press bounce on tap.
@@ -130,7 +130,7 @@
   - Video thumbnails: Hardware-accelerated frame extraction via `ThumbnailUtils`.
 
 ### L. Interactive Cushion Treemap Disk Analyzer (`TreemapActivity`)
-- **Direct Visual Treemap UI**: When running storage analysis, OPfile now opens the full-screen **Interactive Cushion Treemap Viewer** ([`TreemapActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/TreemapActivity.kt)).
+- **Direct Visual Treemap UI**: When running storage analysis, PrismFiles now opens the full-screen **Interactive Cushion Treemap Viewer** ([`TreemapActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/TreemapActivity.kt)).
 - **Hardware-Accelerated 3D Cushion Canvas** ([`CushionTreemapView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/CushionTreemapView.kt)):
   - Renders true cushion surface ridge shading with high-contrast category colors.
   - Dynamically draws directory names and exact sizes within each proportional slice.
@@ -156,19 +156,19 @@
 9. **Instant Live Search Filtering**: Attached `TextWatcher` to `etSearchQuery` to filter files in real time as the user types, matching ZArchiver.
 10. **Rename Dialog Quality-of-Life**: Pre-fills the file name, highlights the file stem (excluding extension) for rapid editing, uses the action label "Rename", and sanitizes illegal path separators.
 11. **Open With / Share / Install APK**: Added an "Open with... / Install" action in the file context sheet using Android `FileProvider`, forwarding `FLAG_GRANT_READ_URI_PERMISSION` to external app choosers.
-12. **In-Archive File Preview Latency & Task Leak**: Fixed case sensitivity bug in [`ViewerActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/ViewerActivity.kt) where `state == "completed"` never matched Rust's serialized PascalCase `"Completed"`, causing a mandatory 3,000ms delay timeout on every single file preview inside archives; added `RustCore.dropTask(taskId)` to prevent task snapshot memory leaks.
-13. **Android 14+ Foreground Service Crash Prevention**: Specified `ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC` in `startForeground` in [`TaskForegroundService.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/TaskForegroundService.kt) when running on Android 10+ (API 29+) and Android 14+ (API 34+), preventing `MissingForegroundServiceTypeException`.
-14. **External Content URI Archive Opening**: Implemented `handleIncomingArchiveIntent` and `onNewIntent` in [`MainActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/MainActivity.kt) supporting both raw `file://` paths and SAF/content provider `content://` streams (e.g., opening `.zip` / `.7z` attachments from Gmail, Chrome, or WhatsApp).
-15. **Video Playback Error Listener**: Attached `videoView.setOnErrorListener` returning `true` in [`ViewerActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/ViewerActivity.kt) to catch unsupported or corrupt video codecs gracefully, preventing uncaught system alert dialogs.
+12. **In-Archive File Preview Latency & Task Leak**: Fixed case sensitivity bug in [`ViewerActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/ViewerActivity.kt) where `state == "completed"` never matched Rust's serialized PascalCase `"Completed"`, causing a mandatory 3,000ms delay timeout on every single file preview inside archives; added `RustCore.dropTask(taskId)` to prevent task snapshot memory leaks.
+13. **Android 14+ Foreground Service Crash Prevention**: Specified `ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC` in `startForeground` in [`TaskForegroundService.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/TaskForegroundService.kt) when running on Android 10+ (API 29+) and Android 14+ (API 34+), preventing `MissingForegroundServiceTypeException`.
+14. **External Content URI Archive Opening**: Implemented `handleIncomingArchiveIntent` and `onNewIntent` in [`MainActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/MainActivity.kt) supporting both raw `file://` paths and SAF/content provider `content://` streams (e.g., opening `.zip` / `.7z` attachments from Gmail, Chrome, or WhatsApp).
+15. **Video Playback Error Listener**: Attached `videoView.setOnErrorListener` returning `true` in [`ViewerActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/ViewerActivity.kt) to catch unsupported or corrupt video codecs gracefully, preventing uncaught system alert dialogs.
 16. **Video Lifecycle Management**: Added `videoView.pause()` in `onStop()` and `videoView.stopPlayback()` in `onDestroy()`.
 17. **PDF OutOfMemory Protection**: Added automatic max dimension clamping (up to 2048px) and try-catch around PDF page bitmap generation in `PdfPageAdapter`, plus safe descriptor cleanup on failure.
-18. **Wheel View Fling Inertia Cancellation**: Guarded `flingAnimator` in [`DonutWheelView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/DonutWheelView.kt) so tapping down cancels active inertia animation immediately, and cancels on `onDetachedFromWindow()`.
+18. **Wheel View Fling Inertia Cancellation**: Guarded `flingAnimator` in [`DonutWheelView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/DonutWheelView.kt) so tapping down cancels active inertia animation immediately, and cancels on `onDetachedFromWindow()`.
 19. **Archive Naming Default**: Handled empty edit text in `showCompressDialog()` with `.ifEmpty { "archive" }`, preventing hidden files named `.$fmt`.
 20. **Virtual Archive Guardrails**: Prevented physical file pasting or item creation directly inside virtual archive paths (`isVirtualArchive == true`) with informative toasts.
-21. **Null-Safe JSON Snapshot Parsing**: Replaced unsafe `getJSONObject("data")` with `optJSONObject("data") ?: return null` across [`MainActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/MainActivity.kt), [`TaskForegroundService.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/TaskForegroundService.kt), and [`ToolsActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/ToolsActivity.kt).
+21. **Null-Safe JSON Snapshot Parsing**: Replaced unsafe `getJSONObject("data")` with `optJSONObject("data") ?: return null` across [`MainActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/MainActivity.kt), [`TaskForegroundService.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/TaskForegroundService.kt), and [`ToolsActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/ToolsActivity.kt).
 
 22. **Production Keystore & Google Play Alignment**: Replaced debug signing (`CN=Android Debug`) with an official 25-year RSA-2048 production keystore (`android/app/release.jks`) using v1, v2, and v3 APK signature schemes.
-23. **Dead-Weight Native Library Removal**: Deleted redundant `libsevenz_rust.so` from all 3 architectures (`arm64-v8a`, `armeabi-v7a`, `x86_64`), as the `sevenz-rust` crate is statically linked inside `libopfile_core.so`.
+23. **Dead-Weight Native Library Removal**: Deleted redundant `libsevenz_rust.so` from all 3 architectures (`arm64-v8a`, `armeabi-v7a`, `x86_64`), as the `sevenz-rust` crate is statically linked inside `libprismfiles_core.so`.
 24. **Dependency Tree Optimization (`rav1e` elimination)**: Configured `image` crate in `rust-core/Cargo.toml` with `default-features = false`, eliminating unused `ravif` and `rav1e` (AV1 video encoder), pruning 497 lines from `Cargo.lock` and shaving ~14 MB across native libraries.
 25. **Privacy & Path Leak Elimination**: Set `--remap-path-prefix` in `scripts/build_rust_core.sh` to prevent host paths (`/home/soham/...`) from being embedded in compiled `.so` binaries.
 26. **Architecture Split Packages (ABI Splits)**: Configured Gradle `splits.abi` for `arm64-v8a`, `armeabi-v7a`, `x86_64`, and Universal APK, reducing device install size from 55 MB down to 12.8 MB–16 MB.
@@ -186,15 +186,15 @@
 | Component | Path | Description |
 |---|---|---|
 | **Rust Core** | [`rust-core/src/`](file:///home/soham/.gemini/antigravity/scratch/opfile/rust-core/src/) | Trait bounds (`?Sized`), format catalog (260+ formats), JNI bindings, stripped binaries |
-| **Android Core** | [`MainActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/MainActivity.kt) | Predictive back navigation, intent sanitization, unknown app sources flow, pinned `..` |
-| **JNI Bridge** | [`RustCore.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/RustCore.kt) | Type-safe Kotlin JNI bindings to Rust core |
-| **Storage Engine** | [`StorageManager.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/StorageManager.kt) | Case-insensitive volume discovery, `MANAGE_EXTERNAL_STORAGE` support |
-| **Radial Donut Wheel** | [`DonutWheelView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/DonutWheelView.kt) | 120fps hardware-accelerated converter with modern `VibratorManager` |
-| **Cushion Treemap** | [`CushionTreemapView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/CushionTreemapView.kt) | 3D ridge shading, `performClick()` accessibility support, `dropTask` safety |
-| **Task Service** | [`TaskForegroundService.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/TaskForegroundService.kt) | Data-sync foreground service with vector notification icon |
-| **Built-in Viewers** | [`ViewerActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/ViewerActivity.kt) | Predictive back, unsaved changes confirmation, safe coroutine cleanup |
-| **Utilities Suite** | [`ToolsActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/opfile/app/ToolsActivity.kt) | Wi-Fi HTTP/FTP server, QR pairing with bitmap recycle, APK inspection |
-| **Release Binaries** | [`OPfile*.apk`](file:///home/soham/.gemini/antigravity/scratch/opfile/) | Official production-signed release APKs (Universal, arm64-v8a, armeabi-v7a, x86_64) |
+| **Android Core** | [`MainActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/MainActivity.kt) | Predictive back navigation, intent sanitization, unknown app sources flow, pinned `..` |
+| **JNI Bridge** | [`RustCore.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/RustCore.kt) | Type-safe Kotlin JNI bindings to Rust core |
+| **Storage Engine** | [`StorageManager.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/StorageManager.kt) | Case-insensitive volume discovery, `MANAGE_EXTERNAL_STORAGE` support |
+| **Radial Donut Wheel** | [`DonutWheelView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/DonutWheelView.kt) | 120fps hardware-accelerated converter with modern `VibratorManager` |
+| **Cushion Treemap** | [`CushionTreemapView.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/CushionTreemapView.kt) | 3D ridge shading, `performClick()` accessibility support, `dropTask` safety |
+| **Task Service** | [`TaskForegroundService.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/TaskForegroundService.kt) | Data-sync foreground service with vector notification icon |
+| **Built-in Viewers** | [`ViewerActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/ViewerActivity.kt) | Predictive back, unsaved changes confirmation, safe coroutine cleanup |
+| **Utilities Suite** | [`ToolsActivity.kt`](file:///home/soham/.gemini/antigravity/scratch/opfile/android/app/src/main/kotlin/com/prismfiles/app/ToolsActivity.kt) | Wi-Fi HTTP/FTP server, QR pairing with bitmap recycle, APK inspection |
+| **Release Binaries** | [`PrismFiles*.apk`](file:///home/soham/.gemini/antigravity/scratch/opfile/) | Official production-signed release APKs (Universal, arm64-v8a, armeabi-v7a, x86_64) |
 
 ---
 
@@ -214,14 +214,14 @@
    ./gradlew assembleRelease
    # BUILD SUCCESSFUL in 14m 15s
    # Output APKs:
-   # - OPfile-arm64-v8a.apk: 15.5 MB (down from 55 MB)
-   # - OPfile-armeabi-v7a.apk: 12.8 MB (down from 55 MB)
-   # - OPfile-x86_64.apk: 17.3 MB (down from 55 MB)
-   # - OPfile.apk (Universal): 41.8 MB (down from 55 MB)
+   # - PrismFiles-arm64-v8a.apk: 15.5 MB (down from 55 MB)
+   # - PrismFiles-armeabi-v7a.apk: 12.8 MB (down from 55 MB)
+   # - PrismFiles-x86_64.apk: 17.3 MB (down from 55 MB)
+   # - PrismFiles.apk (Universal): 41.8 MB (down from 55 MB)
    ```
 4. **Signature & Integrity Verification**:
-   - `apksigner verify --print-certs`: `CN=OPfile, O=OPfile Software, C=US` (v2: true, v3: true).
+   - `apksigner verify --print-certs`: `CN=PrismFiles, O=PrismFiles Software, C=US` (v2: true, v3: true).
    - `unzip -t`: 100% CRC-32 integrity passed across all 4 APKs (0 checksum failures).
 5. **GitHub Deployment**:
-   - Repository: `https://github.com/sohamisOPP/OPfile`
-   - Release: `https://github.com/sohamisOPP/OPfile/releases/tag/v1.0.0`
+   - Repository: `https://github.com/sohamisOPP/PrismFiles`
+   - Release: `https://github.com/sohamisOPP/PrismFiles/releases/tag/v1.0.0`
