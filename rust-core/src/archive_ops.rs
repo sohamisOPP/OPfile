@@ -932,7 +932,7 @@ pub fn create_archive(req: &CreateArchiveRequest, task: Option<&TaskHandle>) -> 
             let mut opts = SimpleFileOptions::default()
                 .compression_method(method)
                 .compression_level(Some(req.profile.zip_level()));
-            if let Some(ref pw) = req.password.as_ref().filter(|s| !s.is_empty()) {
+            if let Some(pw) = req.password.as_deref().filter(|s| !s.is_empty()) {
                 opts = opts.with_aes_encryption(zip::AesMode::Aes256, pw);
             }
 
@@ -977,10 +977,10 @@ pub fn create_archive(req: &CreateArchiveRequest, task: Option<&TaskHandle>) -> 
             let mut sz = sevenz_rust::SevenZWriter::create(&guard.part_path)
                 .map_err(|e| OpfileError::archive(e.to_string()))?;
             let _dict_hint = req.dict_size_mb.unwrap_or(16);
-            if let Some(ref pw) = req.password.as_ref().filter(|s| !s.is_empty()) {
+            if let Some(pw) = req.password.as_deref().filter(|s| !s.is_empty()) {
                 sz.set_content_methods(vec![
                     sevenz_rust::SevenZMethod::LZMA2.into(),
-                    sevenz_rust::AesEncoderOptions::new(pw.as_str().into()).into(),
+                    sevenz_rust::AesEncoderOptions::new(pw.into()).into(),
                 ]);
             }
             for (disk_path, rel) in &files_to_pack {
@@ -1467,6 +1467,12 @@ fn safe_join(root: &Path, rel: &str) -> OpResult<PathBuf> {
         if let std::path::Component::Normal(seg) = comp {
             out.push(seg);
         }
+    }
+    if out == root {
+        return Err(OpfileError::invalid("Empty or invalid relative path"));
+    }
+    if !out.starts_with(root) {
+        return Err(OpfileError::invalid("Path traversal attempt detected"));
     }
     Ok(out)
 }

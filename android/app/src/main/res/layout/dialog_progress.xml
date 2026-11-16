@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:ellipsize="middle"
-        android:singleLine="true"
+        android:maxLines="1"
         android:textColor="@color/text_secondary"
         android:textSize="12sp"
         tools:text="Processing: video_01.mp4" />

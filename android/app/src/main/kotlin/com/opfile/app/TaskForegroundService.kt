@@ -93,11 +93,13 @@ class TaskForegroundService : Service() {
     private fun startPolling(taskId: Long, title: String) {
         pollJob?.cancel()
         pollJob = serviceScope.launch {
+            var missingCount = 0
             while (isActive) {
                 delay(300)
                 val snapJson = RustCore.getTaskSnapshot(taskId)
                 val snapshot = parseSnapshot(snapJson)
                 if (snapshot != null) {
+                    missingCount = 0
                     activeSnapshot = snapshot
                     val isPaused = snapshot.state == "Paused"
                     val isCompleted = snapshot.state == "Completed"
@@ -121,6 +123,15 @@ class TaskForegroundService : Service() {
                         val notif = buildNotification(title, progressInt, text, isPaused)
                         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
                         manager.notify(NOTIFICATION_ID, notif)
+                    }
+                } else {
+                    missingCount++
+                    if (missingCount >= 3) {
+                        activeTaskId = null
+                        activeSnapshot = null
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        stopSelf()
+                        break
                     }
                 }
             }

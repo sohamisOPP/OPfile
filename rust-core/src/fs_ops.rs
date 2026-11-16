@@ -447,10 +447,8 @@ pub fn copy_or_move_batch(
 
 fn unique_dest_path(dst_root: &Path, name: &std::ffi::OsStr, src: &Path) -> PathBuf {
     let candidate = dst_root.join(name);
-    if !candidate.exists() || candidate == src {
-        if candidate != src {
-            return candidate;
-        }
+    if !candidate.exists() && candidate != src {
+        return candidate;
     }
     let stem = Path::new(name)
         .file_stem()

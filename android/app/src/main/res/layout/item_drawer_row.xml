@@ -33,7 +33,7 @@
             android:id="@+id/tv_drawer_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:singleLine="true"
+            android:maxLines="1"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:fontFamily="sans-serif-medium"
@@ -44,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:singleLine="true"
+            android:maxLines="1"
             android:textColor="@color/text_muted"
             android:textSize="11sp"
             tools:text="1.2 GB • 45 items" />

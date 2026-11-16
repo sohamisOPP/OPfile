@@ -270,7 +270,7 @@ pub fn analyze_cushion_treemap(
         })
         .collect();
 
-    children.sort_by(|a, b| b.2.cmp(&a.2));
+    children.sort_by_key(|a| std::cmp::Reverse(a.2));
     children.truncate(48);
 
     let total: u64 = children.iter().map(|c| c.2).sum::<u64>().max(1);

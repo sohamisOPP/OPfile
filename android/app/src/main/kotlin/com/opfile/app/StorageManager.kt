@@ -82,48 +82,52 @@ object StorageManager {
         )
 
         // Query external files dirs to locate secondary SD cards and USB OTG
-        val extDirs = ContextCompat.getExternalFilesDirs(context, null)
-        for (dir in extDirs) {
-            if (dir == null) continue
-            val path = dir.absolutePath
-            val idx = path.indexOf("/Android/data", ignoreCase = true)
-            val root = if (idx > 0) path.substring(0, idx) else null
-            if (root != null && root != PRIMARY_STORAGE_PATH && !list.any { it.path == root }) {
-                val name = if (root.contains("usb", ignoreCase = true) || root.contains("otg", ignoreCase = true)) {
-                    "USB Drive"
-                } else {
-                    "SD Card (${File(root).name})"
-                }
-                list.add(
-                    StorageVolumeInfo(
-                        name = name,
-                        path = root,
-                        isPrimary = false,
-                        isRemovable = true
-                    )
-                )
-            }
-        }
-
-        // Direct scan of /storage mount points
-        val storageRoot = File("/storage")
-        if (storageRoot.exists() && storageRoot.isDirectory) {
-            val subFiles = storageRoot.listFiles() ?: emptyArray()
-            for (f in subFiles) {
-                val p = f.absolutePath
-                if (f.isDirectory && p != "/storage/emulated" && p != "/storage/self" && !list.any { it.path == p }) {
-                    val isUsb = p.contains("usb", ignoreCase = true) || p.contains("otg", ignoreCase = true)
+        try {
+            val extDirs = context.getExternalFilesDirs(null) ?: emptyArray()
+            for (dir in extDirs) {
+                if (dir == null) continue
+                val path = dir.absolutePath
+                val idx = path.indexOf("/Android/data", ignoreCase = true)
+                val root = if (idx > 0) path.substring(0, idx) else null
+                if (root != null && root != PRIMARY_STORAGE_PATH && !list.any { it.path == root }) {
+                    val name = if (root.contains("usb", ignoreCase = true) || root.contains("otg", ignoreCase = true)) {
+                        "USB Drive"
+                    } else {
+                        "SD Card (${File(root).name})"
+                    }
                     list.add(
                         StorageVolumeInfo(
-                            name = if (isUsb) "USB OTG (${f.name})" else "External Storage (${f.name})",
-                            path = p,
+                            name = name,
+                            path = root,
                             isPrimary = false,
                             isRemovable = true
                         )
                     )
                 }
             }
-        }
+        } catch (_: Exception) {}
+
+        // Direct scan of /storage mount points
+        try {
+            val storageRoot = File("/storage")
+            if (storageRoot.exists() && storageRoot.isDirectory) {
+                val subFiles = storageRoot.listFiles() ?: emptyArray()
+                for (f in subFiles) {
+                    val p = f.absolutePath
+                    if (f.isDirectory && p != "/storage/emulated" && p != "/storage/self" && !list.any { it.path == p }) {
+                        val isUsb = p.contains("usb", ignoreCase = true) || p.contains("otg", ignoreCase = true)
+                        list.add(
+                            StorageVolumeInfo(
+                                name = if (isUsb) "USB OTG (${f.name})" else "External Storage (${f.name})",
+                                path = p,
+                                isPrimary = false,
+                                isRemovable = true
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (_: Exception) {}
 
         return list
     }

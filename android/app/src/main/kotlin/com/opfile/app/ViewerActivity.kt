@@ -491,17 +491,29 @@ class PdfPageAdapter(private val renderer: PdfRenderer) : RecyclerView.Adapter<P
     }
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
+        var page: PdfRenderer.Page? = null
         try {
-            val page = renderer.openPage(position)
+            page = renderer.openPage(position)
             val maxDim = maxOf(page.width, page.height)
             val scale = if (maxDim > 2048) 2048f / maxDim else 1.0f
             val renderW = (page.width * scale).toInt().coerceAtLeast(1)
             val renderH = (page.height * scale).toInt().coerceAtLeast(1)
             val bitmap = Bitmap.createBitmap(renderW, renderH, Bitmap.Config.ARGB_8888)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-            page.close()
+
+            val oldDrawable = holder.ivPage.drawable as? android.graphics.drawable.BitmapDrawable
+            oldDrawable?.bitmap?.let { oldBmp ->
+                if (!oldBmp.isRecycled && oldBmp != bitmap) {
+                    oldBmp.recycle()
+                }
+            }
             holder.ivPage.setImageBitmap(bitmap)
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+        } finally {
+            try {
+                page?.close()
+            } catch (_: Throwable) {}
+        }
     }
 
     override fun onViewRecycled(holder: PageViewHolder) {

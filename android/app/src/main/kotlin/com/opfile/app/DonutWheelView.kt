@@ -185,17 +185,20 @@ class DonutWheelView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         flingAnimator?.cancel()
+        flingAnimator = null
     }
 
     private fun checkHapticTick() {
         val idx = getSelectedIndex()
         if (idx != -1 && idx != lastTickIndex) {
             lastTickIndex = idx
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            }
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                }
+            } catch (_: Exception) {}
         }
     }
 

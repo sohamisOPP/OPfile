@@ -109,7 +109,7 @@ class CushionTreemapView @JvmOverloads constructor(
             val rectH = bottom - top
             if (rectW < 1.5f || rectH < 1.5f) continue
 
-            val baseColor = palette[Math.abs(n.name.hashCode()) % palette.size]
+            val baseColor = palette[(n.name.hashCode() and 0x7FFFFFFF) % palette.size]
 
             // 3D Cushion ridge surface gradient
             val shader = LinearGradient(

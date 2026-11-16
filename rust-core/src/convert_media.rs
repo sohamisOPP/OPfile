@@ -54,7 +54,7 @@ pub fn convert_image_pipeline(
     }
 
     if let Some(colors) = opts.quantize_colors {
-        if colors >= 2 && colors <= 256 {
+        if (2..=256).contains(&colors) {
             img = DynamicImage::ImageRgba8(median_cut_quantize(&img.to_rgba8(), colors));
         }
     }
@@ -543,7 +543,7 @@ pub fn convert_audio_pipeline(
     };
 
     if let Some(target_sr) = opts.sample_rate {
-        if target_sr >= 8000 && target_sr <= 192_000 && target_sr != sample_rate {
+        if (8000..=192_000).contains(&target_sr) && target_sr != sample_rate {
             samples = polyphase_sinc_resample(&samples, sample_rate, target_sr, channels);
             sample_rate = target_sr;
         }

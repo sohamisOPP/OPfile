@@ -36,7 +36,7 @@
             android:layout_weight="1"
             android:layout_marginStart="8dp"
             android:ellipsize="middle"
-            android:singleLine="true"
+            android:maxLines="1"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold"

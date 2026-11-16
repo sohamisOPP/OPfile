@@ -22,6 +22,8 @@ mkdir -p "$JNI_LIBS_DIR/x86_64"
 cd "$RUST_DIR"
 
 cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o "$JNI_LIBS_DIR" build --release
+# Remove dead-weight cdylib artifacts that are already statically linked into libopfile_core
+rm -f "$JNI_LIBS_DIR"/*/libsevenz_rust.so
 
 echo "=== Verification of Compiled Libraries ==="
 ls -lh "$JNI_LIBS_DIR"/*/*.so

@@ -1057,7 +1057,7 @@ fn parse_mesh(src: &Path, ext: &str) -> OpResult<MeshData> {
                             tri.push([p[0], p[1], p[2]]);
                             if tri.len() == 3 {
                                 let base = verts.len();
-                                verts.extend(tri.drain(..));
+                                verts.append(&mut tri);
                                 faces.push([base, base + 1, base + 2]);
                             }
                         }

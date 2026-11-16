@@ -179,6 +179,20 @@ fn sanitize_rel(root: &Path, raw: &str) -> PathBuf {
     out
 }
 
+fn sanitize_child(base: &Path, root: &Path, raw: &str) -> Option<PathBuf> {
+    let mut out = base.to_path_buf();
+    for seg in Path::new(raw.trim_start_matches('/')).components() {
+        if let std::path::Component::Normal(s) = seg {
+            out.push(s);
+        }
+    }
+    if out.starts_with(root) {
+        Some(out)
+    } else {
+        None
+    }
+}
+
 async fn handle_http_client(stream: TcpStream, root: PathBuf) -> std::io::Result<()> {
     let mut reader = BufReader::new(stream);
     let mut req_line = String::new();
@@ -312,7 +326,7 @@ async fn handle_ftp_client(stream: TcpStream, root: PathBuf, ip: String) -> std:
                 let next = if arg.starts_with('/') {
                     sanitize_rel(&root, &arg)
                 } else {
-                    cwd.join(&arg)
+                    sanitize_child(&cwd, &root, &arg).unwrap_or_else(|| root.clone())
                 };
                 if next.is_dir() && next.starts_with(&root) {
                     cwd = next;
@@ -366,7 +380,18 @@ async fn handle_ftp_client(stream: TcpStream, root: PathBuf, ip: String) -> std:
                 }
             }
             "RETR" => {
-                let target = cwd.join(&arg);
+                let target_opt = if arg.starts_with('/') {
+                    Some(sanitize_rel(&root, &arg))
+                } else {
+                    sanitize_child(&cwd, &root, &arg)
+                };
+                let target = match target_opt {
+                    Some(t) => t,
+                    None => {
+                        w.write_all(b"550 Access denied\r\n").await?;
+                        continue;
+                    }
+                };
                 if let Some(l) = pasv_listener.take() {
                     if target.is_file() {
                         w.write_all(b"150 Opening binary data connection\r\n").await?;
@@ -384,7 +409,18 @@ async fn handle_ftp_client(stream: TcpStream, root: PathBuf, ip: String) -> std:
                 }
             }
             "STOR" => {
-                let target = cwd.join(&arg);
+                let target_opt = if arg.starts_with('/') {
+                    Some(sanitize_rel(&root, &arg))
+                } else {
+                    sanitize_child(&cwd, &root, &arg)
+                };
+                let target = match target_opt {
+                    Some(t) => t,
+                    None => {
+                        w.write_all(b"550 Access denied\r\n").await?;
+                        continue;
+                    }
+                };
                 if let Some(l) = pasv_listener.take() {
                     w.write_all(b"150 Ready to receive file\r\n").await?;
                     if let Ok((mut data, _)) = l.accept().await {

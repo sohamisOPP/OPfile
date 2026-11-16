@@ -96,9 +96,10 @@ fn walk_iso_dir(
             // Skip "." (0x00) and ".." (0x01)
             if !(id_len == 1 && (id_bytes[0] == 0 || id_bytes[0] == 1)) {
                 let raw_name = if joliet && id_len >= 2 {
-                    let u16s: Vec<u16> = id_bytes
-                        .chunks_exact(2)
-                        .map(|c| u16::from_be_bytes([c[0], c[1]]))
+                    let (chunks, _) = id_bytes.as_chunks::<2>();
+                    let u16s: Vec<u16> = chunks
+                        .iter()
+                        .map(|c| u16::from_be_bytes(*c))
                         .collect();
                     String::from_utf16_lossy(&u16s)
                 } else {

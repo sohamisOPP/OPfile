@@ -170,6 +170,14 @@ class MainActivity : AppCompatActivity() {
         updateClipboardFab()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            progressDialog?.dismiss()
+        } catch (_: Exception) {}
+        progressDialog = null
+    }
+
     private fun loadStickyPreferences() {
         sortField = prefs.getString("sort_field", "name") ?: "name"
         sortDescending = prefs.getBoolean("sort_descending", false)
@@ -1544,6 +1552,9 @@ class MainActivity : AppCompatActivity() {
 
         btnCancel.setOnClickListener {
             RustCore.cancelTask(taskId)
+            if (title.contains("Checksum", true) || title.contains("Testing Archive", true)) {
+                RustCore.dropTask(taskId)
+            }
             dialog.dismiss()
         }
 
@@ -1566,8 +1577,10 @@ class MainActivity : AppCompatActivity() {
                         refreshDirectory()
                         if (title.contains("Checksum", true) && !snap.resultJson.isNullOrEmpty()) {
                             showChecksumResultDialog(snap.resultJson)
+                            RustCore.dropTask(taskId)
                         } else if (title.contains("Testing Archive", true) && !snap.resultJson.isNullOrEmpty()) {
                             showIntegrityResultDialog(snap.resultJson)
+                            RustCore.dropTask(taskId)
                         } else {
                             Toast.makeText(this@MainActivity, "Task Completed", Toast.LENGTH_SHORT).show()
                         }
@@ -1581,11 +1594,17 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             Toast.makeText(this@MainActivity, "Task Failed: $err", Toast.LENGTH_LONG).show()
                         }
+                        if (title.contains("Checksum", true) || title.contains("Testing Archive", true)) {
+                            RustCore.dropTask(taskId)
+                        }
                         break
                     } else if (snap.state == "Canceled") {
                         dialog.dismiss()
                         refreshDirectory()
                         Toast.makeText(this@MainActivity, "Task Canceled", Toast.LENGTH_SHORT).show()
+                        if (title.contains("Checksum", true) || title.contains("Testing Archive", true)) {
+                            RustCore.dropTask(taskId)
+                        }
                         break
                     }
                 }

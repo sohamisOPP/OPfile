@@ -36,7 +36,7 @@
                 android:id="@+id/sheet_file_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:ellipsize="middle"
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
@@ -47,7 +47,7 @@
                 android:id="@+id/sheet_file_meta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 tools:text="14.2 MB | 2026-11-14 18:22" />

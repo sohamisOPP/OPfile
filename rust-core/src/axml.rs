@@ -187,9 +187,10 @@ fn parse_axml(data: &[u8], is_xapk: bool, split_apks: Vec<String>) -> OpResult<A
                         let p = str_off + step;
                         let byte_len = c_len * 2;
                         let end = (p + byte_len).min(chunk.len());
-                        let u16s: Vec<u16> = chunk[p..end]
-                            .chunks_exact(2)
-                            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+                        let (chunks, _) = chunk[p..end].as_chunks::<2>();
+                        let u16s: Vec<u16> = chunks
+                            .iter()
+                            .map(|c| u16::from_le_bytes(*c))
                             .collect();
                         strings.push(String::from_utf16_lossy(&u16s));
                     }
